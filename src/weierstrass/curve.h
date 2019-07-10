@@ -16,16 +16,25 @@ template <class E>
 class WeierstrassCurve
 {
     CurveType cty;
-    E curve_a;
-    E curve_b;
+    E a;
+    E b;
 
 public:
-    E const &get_curve_a() const
+    WeierstrassCurve(E a, E b) : a(a), b(b)
     {
-        return curve_a;
+        cty = CurveType::Generic;
+        if (a.is_zero())
+        {
+            cty = CurveType::AIsZero;
+        }
     }
 
-    CurveType get_type() const
+    E const &curve_a() const
+    {
+        return a;
+    }
+
+    CurveType ctype() const
     {
         return cty;
     }
@@ -40,6 +49,8 @@ class CurvePoint
     E z;
 
 public:
+    CurvePoint(E x, E y, E z) : x(x), y(y), z(z) {}
+
     auto operator=(CurvePoint<E> other)
     {
         this->x = other.x;
@@ -261,7 +272,7 @@ public:
         if (u1 == u2 && s1 == s2)
         {
             // The two points are equal, so we mul2.
-            this->mul2(wc.get_type(), wc.get_curve_a());
+            this->mul2(wc.ctype(), wc.curve_a());
         }
         else
         {
@@ -359,7 +370,7 @@ private:
         if (this->x == u2 && this->y == s2)
         {
             // The two points are equal, so we mul2.
-            this->mul2(wc.get_type(), wc.get_curve_a());
+            this->mul2(wc.ctype(), wc.curve_a());
         }
         else
         {
