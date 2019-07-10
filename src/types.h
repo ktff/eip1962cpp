@@ -59,33 +59,49 @@ typedef std::basic_string<char> String;
 // template <usize N>
 // using BigUint = cbn::big_int<N, u32>;
 
-#define TRY(y, x)                \
-                                 \
-    auto _try_##y = x;           \
-    if (_try_##y.index() == 1)   \
-    {                            \
-        return get<1>(_try_##y); \
-    }                            \
-    auto y = get<0>(_try_##y);
+// #define TRY(y, x)                \
+//                                  \
+//     auto _try_##y = x;           \
+//     if (_try_##y.index() == 1)   \
+//     {                            \
+//         return get<1>(_try_##y); \
+//     }                            \
+//     auto y = get<0>(_try_##y);
 
-#define TRY_TIE(z, y, x)       \
-    {                          \
-        auto a = x;            \
-        if (a.index() == 1)    \
-        {                      \
-            return get<1>(a);  \
-        }                      \
-        tie(z, y) = get<0>(a); \
-    }
+// #define TRY_PAIR(a, b, x)                  \
+//                                            \
+//     auto _try_##y = x;                     \
+//     if (_try_##y.index() == 1)             \
+//     {                                      \
+//         return get<1>(_try_##y);           \
+//     }                                      \
+//     auto _try_pair_##y = get<0>(_try_##y); \
+//     auto a = get<0>(_try_pair_##y);        \
+//     auto b = get<1>(_try_pair_##y);
 
-#define TRY_OR(y, x, e)        \
-                               \
-    auto _try_##y = x;         \
-    if (_try_##y.index() == 1) \
-    {                          \
-        return e;              \
-    }                          \
-    auto y = get<0>(_try_##y);
+// #define TRY_TIE(z, y, x)       \
+//     {                          \
+//         auto a = x;            \
+//         if (a.index() == 1)    \
+//         {                      \
+//             return get<1>(a);  \
+//         }                      \
+//         tie(z, y) = get<0>(a); \
+//     }
+
+// #define TRY_OR(y, x, e)        \
+//                                \
+//     auto _try_##y = x;         \
+//     if (_try_##y.index() == 1) \
+//     {                          \
+//         return e;              \
+//     }                          \
+//     auto y = get<0>(_try_##y);
+
+void unimplemented()
+{
+    throw std::runtime_error("Unimplemented");
+}
 
 // String str_to_owned(const char *s)
 // {

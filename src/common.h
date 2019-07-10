@@ -3,9 +3,5 @@
 
 #include "types.h"
 #include "errors.h"
-#include "slice.h"
-#include "constants.h"
-#include "representation.h"
-#include "d_big_uint.h"
 
 #endif

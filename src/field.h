@@ -1,24 +1,36 @@
 #ifndef H_FIELD
 #define H_FIELD
 
-#include "common.h"
+#include "types.h"
+#include "repr.h"
 
-// E: ElementRepr
-template <class E>
+template <usize N>
 class PrimeField
 {
+    // u64 mont_power;
+    // u64 modulus_bits;
+    Repr<N> modulus;
+    Repr<N> mont_r_;
+    // Repr<N> mont_r2;
+    u64 mont_inv_;
+
+public:
+    
+    Repr<N> mod() const
+    {
+        return modulus;
+    }
+
+    Repr<N> mont_r() const
+    {
+        return mont_r_;
+    }
+
+    // Montgomery parametare for multiplication
+    u64 mont_inv() const
+    {
+        return mont_inv_;
+    }
 };
-
-// E: ElementRepr
-template <class E>
-Result<PrimeField<E>, void> field_from_modulus(BigUint modulus)
-{
-    // TODO
-}
-
-Vec<u64> biguint_to_u64_vec(BigUint v)
-{
-    // TODO
-}
 
 #endif
