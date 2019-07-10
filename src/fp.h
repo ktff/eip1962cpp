@@ -26,7 +26,7 @@ public:
     }
 
     ~Fp() {}
-
+    // ************** ELEMENT impl ************** //
     template <class C>
     static Fp<N> one(C const &context)
     {
@@ -82,6 +82,8 @@ public:
     {
         return repr != other.repr;
     }
+
+    // *************** impl ************ //
 };
 
 #endif
