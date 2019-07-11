@@ -6,29 +6,9 @@
 #include <string>
 #include <iostream>
 
-void unimplemented()
+std::string err_concat(std::string const &a, std::string const &b)
 {
-    throw std::runtime_error("Unimplemented");
-}
-
-void unimplemented(std::string const &err)
-{
-    throw std::runtime_error("Unimplemented: " + err);
-}
-
-void api_err(std::string const &err)
-{
-    throw std::domain_error(err);
-}
-
-void input_err(std::string const &err)
-{
-    api_err("invalid input parameters, " + err);
-}
-
-void unexpected_zero_err(std::string const &err)
-{
-    api_err("parameter expected to be non-zero, " + err);
+    return a + b;
 }
 
 std::string stringf(const char *format, ...)

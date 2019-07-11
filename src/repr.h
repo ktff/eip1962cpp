@@ -9,11 +9,33 @@ const static usize LIMB_BITS = sizeof(u64) * 8;
 template <usize N>
 using Repr = cbn::big_int<N>;
 
+namespace cbn
+{
 template <usize N>
 bool is_even(Repr<N> const &repr)
 {
     return (repr[0] & 0x1) == 0;
 }
+
+template <usize N>
+Repr<N> mul2(Repr<N> repr)
+{
+    return cbn::detail::first<N>(cbn::shift_left(repr, 1));
+}
+
+template <usize N>
+Repr<N> div2(Repr<N> repr)
+{
+    return cbn::shift_right(repr, 1);
+}
+
+template <usize N>
+bool is_zero(Repr<N> const &repr)
+{
+    constexpr Repr<N> zero = {0};
+    return repr == zero;
+}
+} // namespace cbn
 
 template <usize N>
 class RevBitIterator

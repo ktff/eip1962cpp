@@ -3,15 +3,16 @@
 
 #include "types.h"
 
-void unimplemented();
+std::string err_concat(std::string const &a, std::string const &b);
+// Defines so that compiler can see that an exception is being thrown.
 
-void unimplemented(std::string const &err);
+#define unimplemented(ERR) throw std::runtime_error(err_concat("Unimplemented", ERR));
 
-void api_err(std::string const &err);
+#define api_err(ERR) throw std::domain_error(ERR);
 
-void input_err(std::string const &err);
+#define input_err(ERR) throw std::domain_error(err_concat("Invalid input parameters, ", ERR));
 
-void unexpected_zero_err(std::string const &err);
+#define unexpected_zero_err(ERR) throw std::domain_error(err_concat("parameter expected to be non-zero, ", ERR));
 
 std::string stringf(const char *format, ...);
 

@@ -9,13 +9,13 @@
 
 typedef std::vector<uint8_t>::const_iterator It;
 
-class Decoder
+class Deserializer
 {
     It begin;
     It const end;
 
 public:
-    Decoder(std::vector<std::uint8_t> const &input) : begin(input.cbegin()), end(input.cend()) {}
+    Deserializer(std::vector<std::uint8_t> const &input) : begin(input.cbegin()), end(input.cend()) {}
 
     u8
     byte(str &err)
@@ -79,19 +79,13 @@ private:
 };
 
 template <usize N>
-std::vector<u8> serialize_g2_point(u8 field_element_length, CurvePoint<Fp2<N>> const &point)
+Repr<N> decode_modulus(u8 mod_byte_len, Deserializer &deserializer)
 {
-    unimplemented();
-}
-
-template <usize N>
-Repr<N> decode_modulus(u8 field_element_length, Decoder &decoder)
-{
-    if (decoder.peek_byte("Input is not long enough to get modulus") == 0)
+    if (deserializer.peek_byte("Input is not long enough to get modulus") == 0)
     {
         input_err("In modulus encoding highest byte is zero");
     }
-    auto modulus = decoder.number<N>(field_element_length, "Input is not long enough to get modulus");
+    auto modulus = deserializer.number<N>(mod_byte_len, "Input is not long enough to get modulus");
     constexpr Repr<N> zero = {0};
     if (modulus == zero)
     {
@@ -124,9 +118,9 @@ bool is_non_square(Fp<N> const &element, Repr<N> modulus_minus_one_by_2)
 
 // Expects directly data of extension.
 template <usize N>
-FieldExtension2<N> decode_fp2_extension(u8 field_element_length, PrimeField<N> const &field, Decoder &decoder)
+FieldExtension2<N> decode_fp2_extension(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
 {
-    auto x = decoder.number<N>(field_element_length, "Input is not long enough to get Fp element");
+    auto x = deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp element");
     auto const non_residue = Fp<N>::from_repr(x, field);
     if (non_residue.is_zero())
     {
@@ -145,21 +139,21 @@ FieldExtension2<N> decode_fp2_extension(u8 field_element_length, PrimeField<N> c
 }
 
 template <usize N>
-Fp2<N> decode_fp2(u8 field_element_length, FieldExtension2<N> const &field, Decoder &decoder)
+Fp2<N> decode_fp2(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
 {
-    auto const c0 = Fp<N>::from_repr(decoder.number<N>(field_element_length, "Input is not long enough to get Fp2_c0 element"), field);
-    auto const c1 = Fp<N>::from_repr(decoder.number<N>(field_element_length, "Input is not long enough to get Fp2_c1 element"), field);
+    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c0 element"), field);
+    auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c1 element"), field);
     return Fp2<N>(c0, c1, field);
 }
 
 template <usize N>
-WeierstrassCurve<Fp2<N>> decode_weierstrass_curve(u8 field_element_length, FieldExtension2<N> const &field, Decoder &decoder)
+WeierstrassCurve<Fp2<N>> decode_weierstrass_curve(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
 {
-    auto a = decode_fp2(field_element_length, field, decoder);
-    auto b = decode_fp2(field_element_length, field, decoder);
+    auto a = decode_fp2(mod_byte_len, field, deserializer);
+    auto b = decode_fp2(mod_byte_len, field, deserializer);
 
-    auto order_len = decoder.byte("Input is not long enough to get group size length");
-    auto order = decoder.dyn_number(order_len, "Input is not long enough to get main group order size");
+    auto order_len = deserializer.byte("Input is not long enough to get group size length");
+    auto order = deserializer.dyn_number(order_len, "Input is not long enough to get main group order size");
 
     auto zero = true;
     for (auto it = order.cbegin(); it != order.cend(); it++)
@@ -175,34 +169,36 @@ WeierstrassCurve<Fp2<N>> decode_weierstrass_curve(u8 field_element_length, Field
 }
 
 template <usize N>
-CurvePoint<Fp2<N>> decode_g2_point(u8 field_element_length, FieldExtension2<N> const &field, Decoder &decoder)
+CurvePoint<Fp2<N>> decode_g2_point(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
 {
-    auto x = decode_fp2(field_element_length, field, decoder);
-    auto y = decode_fp2(field_element_length, field, decoder);
+    auto x = decode_fp2(mod_byte_len, field, deserializer);
+    auto y = decode_fp2(mod_byte_len, field, deserializer);
     return CurvePoint(x, y);
 }
 
 // Expects directly data of modulus.
 template <usize N>
-std::vector<std::uint8_t> g2_add(u8 field_element_length, Decoder decoder)
+std::vector<std::uint8_t> g2_add(u8 mod_byte_len, Deserializer deserializer)
 {
-    auto modulus = decode_modulus<N>(field_element_length, decoder);
+    auto modulus = decode_modulus<N>(mod_byte_len, deserializer);
     auto field = PrimeField(modulus);
 
-    auto extension_degree = decoder.byte("Input is not long enough to get extension degree");
+    auto extension_degree = deserializer.byte("Input is not long enough to get extension degree");
     switch (extension_degree)
     {
     case 2:
     {
-        auto extension2 = decode_fp2_extension(field_element_length, field, decoder);
-        auto wcurve = decode_weierstrass_curve(field_element_length, extension2, decoder);
+        auto extension2 = decode_fp2_extension(mod_byte_len, field, deserializer);
+        auto wcurve = decode_weierstrass_curve(mod_byte_len, extension2, deserializer);
 
-        auto p_0 = decode_g2_point(field_element_length, extension2, decoder);
-        auto const p_1 = decode_g2_point(field_element_length, extension2, decoder);
+        auto p_0 = decode_g2_point(mod_byte_len, extension2, deserializer);
+        auto const p_1 = decode_g2_point(mod_byte_len, extension2, deserializer);
 
         p_0.add(p_1, wcurve, extension2);
 
-        return serialize_g2_point(field_element_length, p_0);
+        std::vector<u8> data;
+        p_0.serialize(mod_byte_len, data);
+        return data;
     }
     case 3:
         input_err("Extension degree 3 is not yet implemented");
@@ -214,15 +210,15 @@ std::vector<std::uint8_t> g2_add(u8 field_element_length, Decoder decoder)
 
 // Runs non-pairing operation with known limb length
 template <usize N>
-std::vector<std::uint8_t> run_operation(u8 operation, u8 field_element_length, Decoder decoder)
+std::vector<std::uint8_t> run_operation(u8 operation, u8 mod_byte_len, Deserializer deserializer)
 {
 
     switch (operation)
     {
     case OPERATION_G2_ADD:
-        return g2_add<N>(field_element_length, decoder);
+        return g2_add<N>(mod_byte_len, deserializer);
     default:
-        unimplemented();
+        unimplemented("");
         break;
     }
 }
@@ -232,8 +228,8 @@ run(std::vector<std::uint8_t> const &input)
 {
     try
     {
-        auto decoder = Decoder(input);
-        auto operation = decoder.byte("Input should be longer than operation type encoding");
+        auto deserializer = Deserializer(input);
+        auto operation = deserializer.byte("Input should be longer than operation type encoding");
 
         switch (operation)
         {
@@ -245,50 +241,52 @@ run(std::vector<std::uint8_t> const &input)
         case OPERATION_G2_MULTIEXP:
         {
             // Common ABI operations for non-pairing operations
-            auto field_element_length = decoder.byte("Input is not long enough to get modulus length");
-            auto limb_count = (field_element_length + 7) / 8;
+            auto mod_byte_len = deserializer.byte("Input is not long enough to get modulus length");
+            auto limb_count = (mod_byte_len + 7) / 8;
 
             switch (limb_count)
             {
             case 0:
                 input_err("Modulus length is zero");
+                break;
             case 1:
             case 2:
             case 3:
             case 4:
-                return run_operation<4>(operation, field_element_length, decoder);
-                // TODO: uncomment
-                // case 5:
-                //     return run_operation<5>(operation, field_element_length, decoder);
-                // case 6:
-                //     return run_operation<6>(operation, field_element_length, decoder);
-                // case 7:
-                //     return run_operation<7>(operation, field_element_length, decoder);
-                // case 8:
-                //     return run_operation<8>(operation, field_element_length, decoder);
-                // case 9:
-                //     return run_operation<9>(operation, field_element_length, decoder);
-                // case 10:
-                //     return run_operation<10>(operation, field_element_length, decoder);
-                // case 11:
-                //     return run_operation<11>(operation, field_element_length, decoder);
-                // case 12:
-                //     return run_operation<12>(operation, field_element_length, decoder);
-                // case 13:
-                //     return run_operation<13>(operation, field_element_length, decoder);
-                // case 14:
-                //     return run_operation<14>(operation, field_element_length, decoder);
-                // case 15:
-                //     return run_operation<15>(operation, field_element_length, decoder);
-                // case 16:
-                //     return run_operation<16>(operation, field_element_length, decoder);
+                return run_operation<4>(operation, mod_byte_len, deserializer);
+            case 5:
+                return run_operation<5>(operation, mod_byte_len, deserializer);
+            case 6:
+                return run_operation<6>(operation, mod_byte_len, deserializer);
+            case 7:
+                return run_operation<7>(operation, mod_byte_len, deserializer);
+            case 8:
+                return run_operation<8>(operation, mod_byte_len, deserializer);
+            case 9:
+                return run_operation<9>(operation, mod_byte_len, deserializer);
+            case 10:
+                return run_operation<10>(operation, mod_byte_len, deserializer);
+            case 11:
+                return run_operation<11>(operation, mod_byte_len, deserializer);
+            case 12:
+                return run_operation<12>(operation, mod_byte_len, deserializer);
+            case 13:
+                return run_operation<13>(operation, mod_byte_len, deserializer);
+            case 14:
+                return run_operation<14>(operation, mod_byte_len, deserializer);
+            case 15:
+                return run_operation<15>(operation, mod_byte_len, deserializer);
+            case 16:
+                return run_operation<16>(operation, mod_byte_len, deserializer);
 
             default:
                 unimplemented(stringf("for %u modulus limbs", limb_count));
+                break;
             }
+            break;
         }
         case OPERATION_PAIRING:
-            unimplemented();
+            unimplemented("");
             break;
 
         default:

@@ -8,15 +8,16 @@
 template <usize N>
 class PrimeField
 {
-    // u64 mont_power;
-    // u64 modulus_bits;
     Repr<N> modulus;
+    u64 mont_power_;
+    // u64 modulus_bits;
+
     Repr<N> mont_r_;
     Repr<N> mont_r2_;
     u64 mont_inv_;
 
 public:
-    PrimeField(Repr<N> modulus) : modulus(modulus)
+    PrimeField(Repr<N> modulus) : modulus(modulus), mont_power_(N * LIMB_BITS)
     {
         if ((modulus[N - 1] >> (LIMB_BITS - 1)) > 0 || modulus[N - 1] == 0)
         {
@@ -53,6 +54,11 @@ public:
     Repr<N> mont_r2() const
     {
         return mont_r2_;
+    }
+
+    u64 mont_power() const
+    {
+        return mont_power_;
     }
 
     // Montgomery parametare for multiplication

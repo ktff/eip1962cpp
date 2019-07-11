@@ -21,6 +21,8 @@ public:
 
     virtual E const &self() const = 0;
 
+    virtual void serialize(u8 mod_byte_len, std::vector<u8> &data) const = 0;
+
     template <usize N>
     E pow(Repr<N> const &e) const
     {
@@ -60,6 +62,8 @@ public:
     virtual void sub(E const &e) = 0;
 
     virtual void add(E const &e) = 0;
+
+    virtual void negate() = 0;
 
     virtual bool is_zero() const = 0;
 

@@ -17,9 +17,9 @@ class FieldExtension2 : public PrimeField<N>
 public:
     FieldExtension2(Fp<N> non_residue, PrimeField<N> const &field) : PrimeField<N>(field), _non_residue(non_residue) {}
 
-    auto non_residue() const
+    void mul_by_nonresidue(Fp<N> &num) const
     {
-        return _non_residue;
+        num.mul(_non_residue);
     }
 };
 
@@ -30,7 +30,7 @@ class Fp2 : public Element<Fp2<N>>
     Fp<N> c0, c1;
 
 public:
-    Fp2(Fp<N> c0, Fp<N> c1, FieldExtension2<N> const &field) : c0(c0), c1(c1), field(field) {}
+    Fp2(Fp<N> c0, Fp<N> c1, FieldExtension2<N> const &field) : field(field), c0(c0), c1(c1) {}
 
     auto operator=(Fp2<N> const &other)
     {
@@ -72,9 +72,48 @@ public:
         return *this;
     }
 
+    void serialize(u8 mod_byte_len, std::vector<u8> &data) const
+    {
+        c0.serialize(mod_byte_len, data);
+        c1.serialize(mod_byte_len, data);
+    }
+
     Option<Fp2<N>> inverse() const
     {
-        unimplemented();
+        if (is_zero())
+        {
+            return {};
+        }
+        else
+        {
+            // Guide to Pairing-based Cryptography, Algorithm 5.19.
+            // v0 = c0.square()
+            auto v0 = c0;
+            v0.square();
+            // v1 = c1.square()
+            auto v1 = c1;
+            v1.square();
+            // v0 = v0 - beta * v1
+            auto v1_by_nonresidue = v1;
+            field.mul_by_nonresidue(v1_by_nonresidue);
+            v0.sub(v1_by_nonresidue);
+            auto o = v0.inverse();
+            if (o)
+            {
+                auto v1 = o.value();
+                auto e0 = c0;
+                e0.mul(v1);
+                auto e1 = c1;
+                e1.mul(v1);
+                e1.negate();
+
+                return Fp2(e0, e1, field);
+            }
+            else
+            {
+                return {};
+            }
+        }
     }
 
     void square()
@@ -85,7 +124,7 @@ public:
         // v3 = c0 - beta * c1
         auto v3 = c0;
         auto t0 = c1;
-        t0.mul(field.non_residue());
+        field.mul_by_nonresidue(t0);
         v3.sub(t0);
         // v2 = c0 * c1
         auto v2 = c0;
@@ -98,7 +137,7 @@ public:
         c1 = v2;
         c1.mul2();
         c0 = v0;
-        v2.mul(field.non_residue());
+        field.mul_by_nonresidue(v2);
         c0.add(v2);
     }
 
@@ -122,7 +161,7 @@ public:
         c1.sub(v0);
         c1.sub(v1);
         c0 = v0;
-        v1.mul(field.non_residue());
+        field.mul_by_nonresidue(v1);
         c0.add(v1);
     }
 
@@ -136,6 +175,12 @@ public:
     {
         c0.add(e.c0);
         c1.add(e.c1);
+    }
+
+    void negate()
+    {
+        c0.negate();
+        c1.negate();
     }
 
     bool is_zero() const

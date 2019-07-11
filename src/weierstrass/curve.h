@@ -52,7 +52,7 @@ class CurvePoint
 public:
     CurvePoint(E x, E y, E z) : x(x), y(y), z(z) {}
 
-    CurvePoint(E x, E y) : z(x.one()), x(x), y(y)
+    CurvePoint(E x, E y) : CurvePoint(x, y, x.one())
     {
     }
 
@@ -74,6 +74,13 @@ public:
         point.normalize();
 
         return tuple(point.x, point.y);
+    }
+
+    void serialize(u8 mod_byte_len, std::vector<u8> &data) const
+    {
+        auto const pair = xy();
+        std::get<0>(pair).serialize(mod_byte_len, data);
+        std::get<1>(pair).serialize(mod_byte_len, data);
     }
 
 private:
@@ -254,7 +261,7 @@ private:
             break;
 
         default:
-            unimplemented();
+            unimplemented("");
         }
     }
 
