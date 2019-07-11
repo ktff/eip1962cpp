@@ -1,7 +1,7 @@
 #ifndef H_FIELD
 #define H_FIELD
 
-#include "types.h"
+#include "common.h"
 #include "repr.h"
 #include "ctbignum/slicing.hpp"
 
@@ -12,12 +12,17 @@ class PrimeField
     // u64 modulus_bits;
     Repr<N> modulus;
     Repr<N> mont_r_;
-    // Repr<N> mont_r2;
+    Repr<N> mont_r2_;
     u64 mont_inv_;
 
 public:
     PrimeField(Repr<N> modulus) : modulus(modulus)
     {
+        if ((modulus[N - 1] >> (LIMB_BITS - 1)) > 0 || modulus[N - 1] == 0)
+        {
+            input_err("Failed to create prime field from modulus");
+        }
+
         // Compute -m^-1 mod 2**64 by exponentiating by totient(2**64) - 1
         u64 inv = 1;
         for (auto i = 0; i < 63; i++)
@@ -28,14 +33,11 @@ public:
         inv = (std::numeric_limits<u64>::max() - inv) + 2 + std::numeric_limits<u64>::max();
         mont_inv_ = inv;
 
-        if ((modulus[N - 1] >> (LIMB_BITS - 1)) > 0 || modulus[N - 1] == 0)
-        {
-            // Rust version returns Err here so should this function.
-            unimplemented();
-        }
         Repr<N + 1> pow_N_LIMB_BITS = {0};
         pow_N_LIMB_BITS[N] = 1;
         mont_r_ = pow_N_LIMB_BITS % modulus;
+
+        mont_r2_ = cbn::montgomery_mul(mont_r_, mont_r_, modulus, mont_inv_);
     }
 
     Repr<N> mod() const
@@ -48,10 +50,20 @@ public:
         return mont_r_;
     }
 
+    Repr<N> mont_r2() const
+    {
+        return mont_r2_;
+    }
+
     // Montgomery parametare for multiplication
     u64 mont_inv() const
     {
         return mont_inv_;
+    }
+
+    bool is_valid(Repr<N> const &repr) const
+    {
+        return repr < modulus;
     }
 };
 

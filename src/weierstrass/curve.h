@@ -18,9 +18,10 @@ class WeierstrassCurve
     CurveType cty;
     E a;
     E b;
+    std::vector<u64> subgroup_order;
 
 public:
-    WeierstrassCurve(E a, E b) : a(a), b(b)
+    WeierstrassCurve(E a, E b, std::vector<u64> subgroup_order) : a(a), b(b), subgroup_order(subgroup_order)
     {
         cty = CurveType::Generic;
         if (a.is_zero())
@@ -51,21 +52,57 @@ class CurvePoint
 public:
     CurvePoint(E x, E y, E z) : x(x), y(y), z(z) {}
 
-    auto operator=(CurvePoint<E> other)
+    CurvePoint(E x, E y) : z(x.one()), x(x), y(y)
     {
-        this->x = other.x;
-        this->y = other.y;
-        this->z = other.z;
     }
 
-    // auto operator=(CurvePoint<E> const &other)
-    // {
-    //     this->x = other.x;
-    //     this->y = other.y;
-    //     this->z = other.z;
-    // }
+    auto operator=(CurvePoint<E> const &other)
+    {
+        x = other.x;
+        y = other.y;
+        z = other.z;
+    }
+
+    Tuple<E, E> xy() const
+    {
+        if (is_zero())
+        {
+            return tuple(x.zero(), x.zero());
+        }
+
+        auto point = *this;
+        point.normalize();
+
+        return tuple(point.x, point.y);
+    }
 
 private:
+    void normalize()
+    {
+        if (is_zero())
+        {
+            return;
+        }
+        auto const one = x.one();
+        if (z == one)
+        {
+            return;
+        }
+
+        E const z_inv = z.inverse().value_or(x.zero());
+        auto zinv_powered = z_inv;
+        zinv_powered.square();
+
+        // X/Z^2
+        x.mul(zinv_powered);
+
+        // Y/Z^3
+        zinv_powered.mul(z_inv);
+        y.mul(zinv_powered);
+
+        z = one;
+    }
+
     void mul2_generic(E const &curve_a)
     {
         if (this->is_zero())

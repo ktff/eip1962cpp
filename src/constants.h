@@ -1,7 +1,7 @@
 #ifndef H_CONSTANTS
 #define H_CONSTANTS
 
-#include "../types.h"
+#include "types.h"
 
 static const usize BYTES_FOR_LENGTH_ENCODING = 1;
 

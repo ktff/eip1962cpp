@@ -24,13 +24,19 @@ public:
 };
 
 template <usize N>
-class Fp2 : Element<Fp2<N>>
+class Fp2 : public Element<Fp2<N>>
 {
     FieldExtension2<N> const &field;
     Fp<N> c0, c1;
 
 public:
     Fp2(Fp<N> c0, Fp<N> c1, FieldExtension2<N> const &field) : c0(c0), c1(c1), field(field) {}
+
+    auto operator=(Fp2<N> const &other)
+    {
+        c0 = other.c0;
+        c1 = other.c1;
+    }
 
     template <class C>
     static Fp2<N> one(C const &context)
@@ -44,6 +50,31 @@ public:
     {
         FieldExtension2<N> const &field = context;
         return Fp2<N>(Fp<N>::zero(context), Fp<N>::zero(context), field);
+    }
+
+    Fp2<N> one() const
+    {
+        return Fp2::one(field);
+    }
+
+    Fp2<N> zero() const
+    {
+        return Fp2::zero(field);
+    }
+
+    Fp2<N> &self()
+    {
+        return *this;
+    }
+
+    Fp2<N> const &self() const
+    {
+        return *this;
+    }
+
+    Option<Fp2<N>> inverse() const
+    {
+        unimplemented();
     }
 
     void square()
@@ -107,20 +138,22 @@ public:
         c1.add(e.c1);
     }
 
-    bool is_zero()
+    bool is_zero() const
     {
         return c0.is_zero() && c1.is_zero();
     }
 
-    bool operator==(Fp2<N> const &other)
+    bool operator==(Fp2<N> const &other) const
     {
         return c0 == other.c0 && c1 == other.c1;
     }
 
     bool operator!=(Fp2<N> const &other) const
     {
-        return !(this != other);
+        return !(*this == other);
     }
+
+private:
 };
 
 #endif

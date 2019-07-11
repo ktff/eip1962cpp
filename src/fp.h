@@ -10,13 +10,30 @@
 using namespace cbn::literals;
 
 template <usize N>
-class Fp : Element<Fp<N>>
+class Fp : public Element<Fp<N>>
 {
     PrimeField<N> const &field;
     Repr<N> repr;
 
-public:
     Fp(Repr<N> repr, PrimeField<N> const &field) : repr(repr), field(field) {}
+
+public:
+    static Fp<N> from_repr(Repr<N> repr, PrimeField<N> const &field)
+    {
+        if (field.is_valid(repr))
+        {
+            Fp<N> r1 = Fp(repr, field);
+            Fp<N> r2 = Fp(field.mont_r2(), field);
+
+            r1.mul(r2);
+
+            return r1;
+        }
+        else
+        {
+            api_err("not an element of the field");
+        }
+    }
 
     Fp(Fp<N> const &other) : Fp(other.repr, other.field) {}
 
@@ -40,6 +57,31 @@ public:
         constexpr Repr<N> zero = {0};
         PrimeField<N> const &field = context;
         return Fp(zero, field);
+    }
+
+    Fp<N> one() const
+    {
+        return Fp::one(field);
+    }
+
+    Fp<N> zero() const
+    {
+        return Fp::zero(field);
+    }
+
+    Fp<N> &self()
+    {
+        return *this;
+    }
+
+    Fp<N> const &self() const
+    {
+        return *this;
+    }
+
+    Option<Fp<N>> inverse() const
+    {
+        unimplemented();
     }
 
     void square()
