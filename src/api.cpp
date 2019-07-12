@@ -6,6 +6,7 @@
 #include "field.h"
 #include "weierstrass/curve.h"
 #include "extension_towers/fp2.h"
+#include "extension_towers/fp3.h"
 
 typedef std::vector<uint8_t>::const_iterator It;
 
@@ -115,42 +116,32 @@ Repr<N> decode_modulus(u8 mod_byte_len, Deserializer &deserializer)
 }
 
 template <usize N>
-bool is_non_square(Fp<N> const &element, Repr<N> modulus_minus_one_by_2)
+bool is_non_nth_root(Fp<N> const &element, Repr<N> modulus, u64 n)
 {
     if (element.is_zero())
     {
         return false;
     }
-    auto l = element.pow(modulus_minus_one_by_2);
-    auto one = element.one();
 
-    return l != one;
-}
-
-// Expects directly data of extension.
-template <usize N>
-FieldExtension2<N> decode_fp2_extension(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
-{
-    auto x = deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp element");
-    auto const non_residue = Fp<N>::from_repr(x, field);
-    if (non_residue.is_zero())
-    {
-        unexpected_zero_err("Fp2 non-residue can not be zero");
-    }
-
+    auto power = modulus;
     constexpr Repr<N> one = {1};
-    Repr<N> modulus_minus_one = cbn::subtract_ignore_carry(field.mod(), one);
-    Repr<N> modulus_minus_one_by_2 = cbn::shift_right(modulus_minus_one, 1);
-    if (!is_non_square<N>(non_residue, modulus_minus_one_by_2))
+    power = cbn::subtract_ignore_carry(power, one);
+    Repr<N> divisor = {n};
+    if (!cbn::is_zero(power % divisor))
     {
-        input_err("Non-residue for Fp2 is actually a residue");
+        return false;
     }
+    power = power / divisor;
 
-    return FieldExtension2(non_residue, field);
+    auto l = element.pow(power);
+    auto e_one = element.one();
+
+    return l != e_one;
 }
 
+// ********************* OVERLOADED deserializers of of Fp2 and Fp3 *********************** //
 template <usize N>
-Fp2<N> decode_fp2(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
+Fp2<N> deser_fpM(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
 {
     auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c0 element"), field);
     auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c1 element"), field);
@@ -158,10 +149,39 @@ Fp2<N> decode_fp2(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer
 }
 
 template <usize N>
-WeierstrassCurve<Fp2<N>> decode_weierstrass_curve(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
+Fp3<N> deser_fpM(u8 mod_byte_len, FieldExtension3<N> const &field, Deserializer &deserializer)
 {
-    auto a = decode_fp2(mod_byte_len, field, deserializer);
-    auto b = decode_fp2(mod_byte_len, field, deserializer);
+    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c0 element"), field);
+    auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c1 element"), field);
+    auto const c2 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c2 element"), field);
+    return Fp3<N>(c0, c1, c2, field);
+}
+
+// ************************* CURVE deserializers ***************************** //
+// Expects directly data of extension.
+template <class C, usize N>
+C deser_extension(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
+{
+    auto x = deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp element");
+    auto const non_residue = Fp<N>::from_repr(x, field);
+    if (non_residue.is_zero())
+    {
+        unexpected_zero_err("Fp* non-residue can not be zero");
+    }
+
+    if (!is_non_nth_root<N>(non_residue, field.mod(), 2))
+    {
+        input_err("Non-residue for Fp* is actually a residue");
+    }
+
+    return C(non_residue, field);
+}
+
+template <class C, class F, usize N>
+WeierstrassCurve<F> decode_weierstrass_curve(u8 mod_byte_len, C const &field, Deserializer &deserializer)
+{
+    F a = deser_fpM(mod_byte_len, field, deserializer);
+    F b = deser_fpM(mod_byte_len, field, deserializer);
 
     auto order_len = deserializer.byte("Input is not long enough to get group size length");
     auto order = deserializer.dyn_number(order_len, "Input is not long enough to get main group order size");
@@ -179,12 +199,59 @@ WeierstrassCurve<Fp2<N>> decode_weierstrass_curve(u8 mod_byte_len, FieldExtensio
     return WeierstrassCurve(a, b, order, order_len);
 }
 
-template <usize N>
-CurvePoint<Fp2<N>> decode_g2_point(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
+template <class C, class F, usize N>
+CurvePoint<F> decode_g2_point(u8 mod_byte_len, C const &field, Deserializer &deserializer)
 {
-    auto x = decode_fp2(mod_byte_len, field, deserializer);
-    auto y = decode_fp2(mod_byte_len, field, deserializer);
+    F x = deser_fpM(mod_byte_len, field, deserializer);
+    F y = deser_fpM(mod_byte_len, field, deserializer);
     return CurvePoint(x, y);
+}
+
+// ************************* MAIN functions ******************************** //
+
+template <class C, class F, usize N>
+std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len, PrimeField<N> const &field, Deserializer deserializer)
+{
+    // deser Extension2 & Weierstrass curve
+    auto const extension = deser_extension<C, N>(mod_byte_len, field, deserializer);
+    auto const wcurve = decode_weierstrass_curve<C, F, N>(mod_byte_len, extension, deserializer);
+
+    // Run the operation for the result
+    std::vector<u8> result;
+    switch (operation)
+    {
+    case OPERATION_G2_ADD:
+    {
+        // deser CurvePoints to be added
+        auto p_0 = decode_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
+        auto const p_1 = decode_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
+
+        // Apply addition
+        p_0.add(p_1, wcurve, extension);
+
+        // seri Result
+        p_0.serialize(mod_byte_len, result);
+        break;
+    }
+    case OPERATION_G2_MUL:
+    {
+        // deser CurvePoint & Scalar
+        auto const p_0 = decode_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
+        auto const scalar = decode_scalar(mod_byte_len, wcurve, deserializer);
+
+        // Apply multiplication
+        auto r = p_0.mul(scalar, wcurve, extension);
+
+        // seri Result
+        r.serialize(mod_byte_len, result);
+        break;
+    }
+    default:
+        unimplemented("");
+    }
+
+    // Done
+    return result;
 }
 
 // Runs non-pairing operation with known limb length
@@ -192,58 +259,21 @@ template <usize N>
 std::vector<std::uint8_t> run_operation(u8 operation, u8 mod_byte_len, Deserializer deserializer)
 {
     // deser Modulus -> Field
-    auto modulus = decode_modulus<N>(mod_byte_len, deserializer);
-    auto field = PrimeField(modulus);
+    auto const modulus = decode_modulus<N>(mod_byte_len, deserializer);
+    auto const field = PrimeField(modulus);
 
     // Soulution by extension degree
-    auto extension_degree = deserializer.byte("Input is not long enough to get extension degree");
+    auto const extension_degree = deserializer.byte("Input is not long enough to get extension degree");
     switch (extension_degree)
     {
     case 2:
     {
-        // deser Extension2 & Weierstrass curve
-        auto const extension2 = decode_fp2_extension(mod_byte_len, field, deserializer);
-        auto const wcurve = decode_weierstrass_curve(mod_byte_len, extension2, deserializer);
-
-        // Run the operation for the result
-        std::vector<u8> result;
-        switch (operation)
-        {
-        case OPERATION_G2_ADD:
-        {
-            // deser CurvePoints to be added
-            auto p_0 = decode_g2_point(mod_byte_len, extension2, deserializer);
-            auto const p_1 = decode_g2_point(mod_byte_len, extension2, deserializer);
-
-            // Apply addition
-            p_0.add(p_1, wcurve, extension2);
-
-            // seri Result
-            p_0.serialize(mod_byte_len, result);
-            break;
-        }
-        case OPERATION_G2_MUL:
-        {
-            // deser CurvePoint & Scalar
-            auto const p_0 = decode_g2_point(mod_byte_len, extension2, deserializer);
-            auto const scalar = decode_scalar(mod_byte_len, wcurve, deserializer);
-
-            // Apply multiplication
-            auto r = p_0.mul(scalar, wcurve, extension2);
-
-            // seri Result
-            r.serialize(mod_byte_len, result);
-            break;
-        }
-        default:
-            unimplemented("");
-        }
-
-        // Done
-        return result;
+        return run_operation_extension<FieldExtension2<N>, Fp2<N>, N>(operation, mod_byte_len, field, deserializer);
     }
     case 3:
-        input_err("Extension degree 3 is not yet implemented");
+    {
+        return run_operation_extension<FieldExtension3<N>, Fp3<N>, N>(operation, mod_byte_len, field, deserializer);
+    }
 
     default:
         input_err("Invalid extension degree");
@@ -281,30 +311,30 @@ run(std::vector<std::uint8_t> const &input)
             case 3:
             case 4:
                 return run_operation<4>(operation, mod_byte_len, deserializer);
-            case 5:
-                return run_operation<5>(operation, mod_byte_len, deserializer);
-            case 6:
-                return run_operation<6>(operation, mod_byte_len, deserializer);
-            case 7:
-                return run_operation<7>(operation, mod_byte_len, deserializer);
-            case 8:
-                return run_operation<8>(operation, mod_byte_len, deserializer);
-            case 9:
-                return run_operation<9>(operation, mod_byte_len, deserializer);
-            case 10:
-                return run_operation<10>(operation, mod_byte_len, deserializer);
-            case 11:
-                return run_operation<11>(operation, mod_byte_len, deserializer);
-            case 12:
-                return run_operation<12>(operation, mod_byte_len, deserializer);
-            case 13:
-                return run_operation<13>(operation, mod_byte_len, deserializer);
-            case 14:
-                return run_operation<14>(operation, mod_byte_len, deserializer);
-            case 15:
-                return run_operation<15>(operation, mod_byte_len, deserializer);
-            case 16:
-                return run_operation<16>(operation, mod_byte_len, deserializer);
+                // case 5:
+                //     return run_operation<5>(operation, mod_byte_len, deserializer);
+                // case 6:
+                //     return run_operation<6>(operation, mod_byte_len, deserializer);
+                // case 7:
+                //     return run_operation<7>(operation, mod_byte_len, deserializer);
+                // case 8:
+                //     return run_operation<8>(operation, mod_byte_len, deserializer);
+                // case 9:
+                //     return run_operation<9>(operation, mod_byte_len, deserializer);
+                // case 10:
+                //     return run_operation<10>(operation, mod_byte_len, deserializer);
+                // case 11:
+                //     return run_operation<11>(operation, mod_byte_len, deserializer);
+                // case 12:
+                //     return run_operation<12>(operation, mod_byte_len, deserializer);
+                // case 13:
+                //     return run_operation<13>(operation, mod_byte_len, deserializer);
+                // case 14:
+                //     return run_operation<14>(operation, mod_byte_len, deserializer);
+                // case 15:
+                //     return run_operation<15>(operation, mod_byte_len, deserializer);
+                // case 16:
+                //     return run_operation<16>(operation, mod_byte_len, deserializer);
 
             default:
                 unimplemented(stringf("for %u modulus limbs", limb_count));

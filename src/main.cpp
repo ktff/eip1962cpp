@@ -4,6 +4,7 @@
 #include "element.h"
 #include "field.h"
 #include "extension_towers/fp2.h"
+#include "extension_towers/fp3.h"
 #include "api.h"
 // #include ".h"
 // #include "public_interface/api.h"
@@ -39,4 +40,7 @@ int main()
 
     std::cout
         << "Sumed" << std::endl;
+
+    const FieldExtension3<6> context3(Fp<6>::from_repr({0, 0, 0, 0, 0, 1243}, context), context);
+    const Fp3<6> fp3_a(Fp<6>::from_repr({0, 0, 0, 0, 0, 234234}, context3), Fp<6>::from_repr({0, 0, 0, 0, 0, 124323}, context3), Fp<6>::from_repr({0, 0, 0, 0, 0, 5467657}, context3), context3);
 }
