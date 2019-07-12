@@ -1,7 +1,7 @@
 #ifndef H_MULTIEXP
 #define H_MULTIEXP
 
-#include "weierstrass/curve.h"
+#include "curve.h"
 #include "common.h"
 
 template <class E, class C>

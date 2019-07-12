@@ -1,7 +1,7 @@
 #ifndef H_FP2
 #define H_FP2
 
-#include "../types.h"
+#include "../common.h"
 #include "../element.h"
 #include "../fp.h"
 #include "../field.h"
@@ -37,6 +37,8 @@ public:
         c0 = other.c0;
         c1 = other.c1;
     }
+
+    // ************************* ELEMENT impl ********************************* //
 
     template <class C>
     static Fp2<N> one(C const &context)
@@ -197,8 +199,6 @@ public:
     {
         return !(*this == other);
     }
-
-private:
 };
 
 #endif

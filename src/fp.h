@@ -1,7 +1,7 @@
 #ifndef H_FP
 #define H_FP
 
-#include "types.h"
+#include "common.h"
 #include "element.h"
 #include "repr.h"
 #include "field.h"
@@ -39,7 +39,8 @@ public:
     }
 
     ~Fp() {}
-    // ************** ELEMENT impl ************** //
+
+    // ************************* ELEMENT impl ********************************* //
     template <class C>
     static Fp<N> one(C const &context)
     {
@@ -148,6 +149,29 @@ public:
     }
 
     // *************** impl ************ //
+
+    bool is_non_nth_root(u64 n) const
+    {
+        if (is_zero())
+        {
+            return false;
+        }
+
+        auto power = field.mod();
+        constexpr Repr<N> one = {1};
+        power = cbn::subtract_ignore_carry(power, one);
+        Repr<N> divisor = {n};
+        if (!cbn::is_zero(power % divisor))
+        {
+            return false;
+        }
+        power = power / divisor;
+
+        auto l = this->pow(power);
+        auto e_one = this->one();
+
+        return l != e_one;
+    }
 
 private:
     static Option<Fp<N>> from_repr_try(Repr<N> repr, PrimeField<N> const &field)

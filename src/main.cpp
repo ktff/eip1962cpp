@@ -1,5 +1,5 @@
 #include <iostream>
-#include "weierstrass/curve.h"
+#include "curve.h"
 #include "fp.h"
 #include "element.h"
 #include "field.h"

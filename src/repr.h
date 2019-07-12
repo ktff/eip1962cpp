@@ -1,7 +1,7 @@
 #ifndef H_REPR
 #define H_REPR
 
-#include "types.h"
+#include "common.h"
 #include "ctbignum/ctbignum.hpp"
 
 const static usize LIMB_BITS = sizeof(u64) * 8;
@@ -9,6 +9,7 @@ const static usize LIMB_BITS = sizeof(u64) * 8;
 template <usize N>
 using Repr = cbn::big_int<N>;
 
+// *********************** FUNCTIONS on Repr ******************* //
 namespace cbn
 {
 template <usize N>
@@ -35,76 +36,50 @@ bool is_zero(Repr<N> const &repr)
     constexpr Repr<N> zero = {0};
     return repr == zero;
 }
+
 } // namespace cbn
 
-template <usize N>
-class RevBitIterator
-{
-    Repr<N> const &repr;
-    usize at;
-
-public:
-    RevBitIterator(Repr<N> const &repr) : repr(repr), at(N * LIMB_BITS) {}
-
-    bool get() const
-    {
-        auto i = at / LIMB_BITS;
-        auto off = at - (i * LIMB_BITS);
-        return (repr[i] >> off) & 0x1;
-    }
-
-    /// True if moved
-    bool before()
-    {
-        if (at > 0)
-        {
-            at--;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-};
-
-class RevBitIteratorDyn
-{
-    std::vector<u64> const &repr;
-    usize at;
-
-public:
-    RevBitIteratorDyn(std::vector<u64> const &repr) : repr(repr), at(repr.size() * LIMB_BITS) {}
-
-    bool get() const
-    {
-        auto i = at / LIMB_BITS;
-        auto off = at - (i * LIMB_BITS);
-        return (repr[i] >> off) & 0x1;
-    }
-
-    /// True if moved
-    bool before()
-    {
-        if (at > 0)
-        {
-            at--;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-};
-
+// *********************** FUNCTIONS on std::vector<u64> ******************* //
 // a >= b
 // Where a and b are numbers
-bool greater_or_equal_dyn(std::vector<u64> const &a, std::vector<u64> const &b);
+bool greater_or_equal(std::vector<u64> const &a, std::vector<u64> const &b);
 
 // Minimal number of bits necessary to represent number in repr
 u32 num_bits(std::vector<u64> const &repr);
 
 void left_shift(std::vector<u64> &repr, u64 shift);
+
+// ********************** HELPER CLASSES ******************* //
+// A is required to have to methods: size() and operator[]
+template <class A>
+class RevBitIterator
+{
+    A const &repr;
+    usize at;
+
+public:
+    RevBitIterator(A const &repr) : repr(repr), at(repr.size() * LIMB_BITS) {}
+
+    bool get() const
+    {
+        auto i = at / LIMB_BITS;
+        auto off = at - (i * LIMB_BITS);
+        return (repr[i] >> off) & 0x1;
+    }
+
+    /// True if moved
+    bool before()
+    {
+        if (at > 0)
+        {
+            at--;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
 
 #endif

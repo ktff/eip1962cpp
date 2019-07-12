@@ -23,6 +23,28 @@ public:
 
     virtual void serialize(u8 mod_byte_len, std::vector<u8> &data) const = 0;
 
+    // Computes the multiplicative inverse of this element, if nonzero.
+    virtual Option<E> inverse() const = 0;
+
+    virtual void square() = 0;
+
+    virtual void mul2() = 0;
+
+    virtual void mul(E const &e) = 0;
+
+    virtual void sub(E const &e) = 0;
+
+    virtual void add(E const &e) = 0;
+
+    virtual void negate() = 0;
+
+    virtual bool is_zero() const = 0;
+
+    virtual bool operator==(E const &other) const = 0;
+
+    virtual bool operator!=(E const &other) const = 0;
+
+    // ********************* DEFAULT IMPLEMENTED ***************** //
     template <usize N>
     E pow(Repr<N> const &e) const
     {
@@ -49,27 +71,6 @@ public:
 
         return res;
     }
-
-    // Computes the multiplicative inverse of this element, if nonzero.
-    virtual Option<E> inverse() const = 0;
-
-    virtual void square() = 0;
-
-    virtual void mul2() = 0;
-
-    virtual void mul(E const &e) = 0;
-
-    virtual void sub(E const &e) = 0;
-
-    virtual void add(E const &e) = 0;
-
-    virtual void negate() = 0;
-
-    virtual bool is_zero() const = 0;
-
-    virtual bool operator==(E const &other) const = 0;
-
-    virtual bool operator!=(E const &other) const = 0;
 };
 
 #endif

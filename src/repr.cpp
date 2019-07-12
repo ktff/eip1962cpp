@@ -2,7 +2,7 @@
 
 // a >= b
 // Where a and b are numbers
-bool greater_or_equal_dyn(std::vector<u64> const &a, std::vector<u64> const &b)
+bool greater_or_equal(std::vector<u64> const &a, std::vector<u64> const &b)
 {
     for (auto i = a.size(); i < b.size(); i++)
     {
