@@ -160,7 +160,7 @@ Fp3<N> deser_fpM(u8 mod_byte_len, FieldExtension3<N> const &field, Deserializer 
 // ************************* CURVE deserializers ***************************** //
 // Expects directly data of extension.
 template <class C, usize N>
-C deser_extension(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
+C deser_extension(u8 mod_byte_len, PrimeField<N> const &field, u8 extension_degree, Deserializer &deserializer)
 {
     auto x = deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp element");
     auto const non_residue = Fp<N>::from_repr(x, field);
@@ -169,7 +169,7 @@ C deser_extension(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &des
         unexpected_zero_err("Fp* non-residue can not be zero");
     }
 
-    if (!is_non_nth_root<N>(non_residue, field.mod(), 2))
+    if (!is_non_nth_root<N>(non_residue, field.mod(), extension_degree))
     {
         input_err("Non-residue for Fp* is actually a residue");
     }
@@ -210,10 +210,10 @@ CurvePoint<F> decode_g2_point(u8 mod_byte_len, C const &field, Deserializer &des
 // ************************* MAIN functions ******************************** //
 
 template <class C, class F, usize N>
-std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len, PrimeField<N> const &field, Deserializer deserializer)
+std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len, PrimeField<N> const &field, u8 extension_degree, Deserializer deserializer)
 {
     // deser Extension2 & Weierstrass curve
-    auto const extension = deser_extension<C, N>(mod_byte_len, field, deserializer);
+    auto const extension = deser_extension<C, N>(mod_byte_len, field, extension_degree, deserializer);
     auto const wcurve = decode_weierstrass_curve<C, F, N>(mod_byte_len, extension, deserializer);
 
     // Run the operation for the result
@@ -268,11 +268,11 @@ std::vector<std::uint8_t> run_operation(u8 operation, u8 mod_byte_len, Deseriali
     {
     case 2:
     {
-        return run_operation_extension<FieldExtension2<N>, Fp2<N>, N>(operation, mod_byte_len, field, deserializer);
+        return run_operation_extension<FieldExtension2<N>, Fp2<N>, N>(operation, mod_byte_len, field, extension_degree, deserializer);
     }
     case 3:
     {
-        return run_operation_extension<FieldExtension3<N>, Fp3<N>, N>(operation, mod_byte_len, field, deserializer);
+        return run_operation_extension<FieldExtension3<N>, Fp3<N>, N>(operation, mod_byte_len, field, extension_degree, deserializer);
     }
 
     default:
