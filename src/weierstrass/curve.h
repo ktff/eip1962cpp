@@ -424,7 +424,6 @@ public:
         return res;
     }
 
-private:
     template <class C>
     void add_mixed(CurvePoint<E> const &b, WeierstrassCurve<E> const &wc, C const &context)
     {
@@ -518,6 +517,7 @@ private:
         }
     }
 
+private:
     // template <usize N, class C>
     // CurvePoint<E> mul_mixed_addition(Repr<N> scalar, WeierstrassCurve<E> const &wc, C const &context) const
     // {

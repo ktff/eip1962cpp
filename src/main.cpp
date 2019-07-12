@@ -6,6 +6,7 @@
 #include "extension_towers/fp2.h"
 #include "extension_towers/fp3.h"
 #include "api.h"
+#include "multiexp.h"
 // #include ".h"
 // #include "public_interface/api.h"
 // #include "representation.h"

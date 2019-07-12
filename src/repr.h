@@ -102,4 +102,9 @@ public:
 // Where a and b are numbers
 bool greater_or_equal_dyn(std::vector<u64> const &a, std::vector<u64> const &b);
 
+// Minimal number of bits necessary to represent number in repr
+u32 num_bits(std::vector<u64> const &repr);
+
+void left_shift(std::vector<u64> &repr, u64 shift);
+
 #endif
