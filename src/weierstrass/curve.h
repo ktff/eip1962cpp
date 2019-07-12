@@ -2,6 +2,7 @@
 #define H_WEIS_CURVE
 
 #include "../common.h"
+#include "../repr.h"
 
 enum CurveType
 {
@@ -18,16 +19,27 @@ class WeierstrassCurve
     CurveType cty;
     E a;
     E b;
-    std::vector<u64> subgroup_order;
+    std::vector<u64> subgroup_order_;
+    u8 order_len_;
 
 public:
-    WeierstrassCurve(E a, E b, std::vector<u64> subgroup_order) : a(a), b(b), subgroup_order(subgroup_order)
+    WeierstrassCurve(E a, E b, std::vector<u64> subgroup_order, u8 order_len) : a(a), b(b), subgroup_order_(subgroup_order), order_len_(order_len)
     {
         cty = CurveType::Generic;
         if (a.is_zero())
         {
             cty = CurveType::AIsZero;
         }
+    }
+
+    u8 order_len() const
+    {
+        return order_len_;
+    }
+
+    std::vector<u64> const &subgroup_order() const
+    {
+        return subgroup_order_;
     }
 
     E const &curve_a() const
@@ -54,6 +66,12 @@ public:
 
     CurvePoint(E x, E y) : CurvePoint(x, y, x.one())
     {
+    }
+
+    template <class C>
+    static CurvePoint<E> zero(C const &context)
+    {
+        return CurvePoint(E::zero(context), E::one(context), E::zero(context));
     }
 
     auto operator=(CurvePoint<E> const &other)
@@ -110,7 +128,7 @@ private:
         z = one;
     }
 
-    void mul2_generic(E const &curve_a)
+    void mul2_generic(WeierstrassCurve<E> const &wc)
     {
         if (this->is_zero())
         {
@@ -150,7 +168,7 @@ private:
         // curve_a*z^4
         auto a_z_4 = z_2;
         a_z_4.square();
-        a_z_4.mul(curve_a);
+        a_z_4.mul(wc.curve_a());
 
         e.add(a_z_4);
 
@@ -248,12 +266,12 @@ private:
         return z.is_zero();
     }
 
-    void mul2(CurveType cty, E const &curve_a)
+    void mul2(WeierstrassCurve<E> const &wc)
     {
-        switch (cty)
+        switch (wc.ctype())
         {
         case CurveType::Generic:
-            this->mul2_generic(curve_a);
+            this->mul2_generic(wc);
             break;
 
         case CurveType::AIsZero:
@@ -316,16 +334,14 @@ public:
         if (u1 == u2 && s1 == s2)
         {
             // The two points are equal, so we mul2.
-            this->mul2(wc.ctype(), wc.curve_a());
+            this->mul2(wc);
         }
         else
         {
             // If we're adding -a and a together, this->z becomes zero as H becomes zero.
             if (u1 == u2)
             {
-                this->x = E::zero(context);
-                this->y = E::one(context);
-                this->z = E::zero(context);
+                *this = CurvePoint<E>::zero(context);
                 return;
             }
 
@@ -375,6 +391,39 @@ public:
         }
     }
 
+    // Returnes multiple of this by a scalar.
+    template <class C>
+    CurvePoint<E> mul(std::vector<u64> const &scalar, WeierstrassCurve<E> const &wc, C const &context) const
+    {
+        // Not using this is less performant, but for now it is simplier.
+        // if (z == x.one())
+        // {
+        //     return mul_mixed_addition(scalar, wc, context);
+        // }
+
+        auto res = CurvePoint<E>::zero(context);
+        auto found_one = false;
+        for (auto it = RevBitIteratorDyn(scalar); it.before();)
+        {
+            auto i = it.get();
+            if (found_one)
+            {
+                res.mul2(wc);
+            }
+            else
+            {
+                found_one = i;
+            }
+
+            if (i)
+            {
+                res.add(*this, wc, context);
+            }
+        }
+
+        return res;
+    }
+
 private:
     template <class C>
     void add_mixed(CurvePoint<E> const &b, WeierstrassCurve<E> const &wc, C const &context)
@@ -414,7 +463,7 @@ private:
         if (this->x == u2 && this->y == s2)
         {
             // The two points are equal, so we mul2.
-            this->mul2(wc.ctype(), wc.curve_a());
+            this->mul2(wc);
         }
         else
         {
@@ -468,6 +517,32 @@ private:
             this->z.sub(hh);
         }
     }
+
+    // template <usize N, class C>
+    // CurvePoint<E> mul_mixed_addition(Repr<N> scalar, WeierstrassCurve<E> const &wc, C const &context) const
+    // {
+    //     auto res = CurvePoint<E>::zero(context);
+    //     auto found_one = false;
+    //     for (auto it = RevBitIterator(scalar); it.before();)
+    //     {
+    //         auto i = it.get();
+    //         if (found_one)
+    //         {
+    //             res.mul2();
+    //         }
+    //         else
+    //         {
+    //             found_one = i;
+    //         }
+
+    //         if (i)
+    //         {
+    //             res.add_mixed(this, wc, context);
+    //         }
+    //     }
+
+    //     return res;
+    // }
 };
 
 #endif

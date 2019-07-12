@@ -78,6 +78,17 @@ private:
     }
 };
 
+template <class E>
+std::vector<u64> decode_scalar(u8 mod_byte_len, WeierstrassCurve<E> const &wc, Deserializer &deserializer)
+{
+    auto scalar = deserializer.dyn_number(mod_byte_len, "Input is not long enough to get scalar");
+    if (greater_or_equal_dyn(scalar, wc.subgroup_order()))
+    {
+        input_err("Group order is less or equal scalar");
+    }
+    return scalar;
+}
+
 template <usize N>
 Repr<N> decode_modulus(u8 mod_byte_len, Deserializer &deserializer)
 {
@@ -165,7 +176,7 @@ WeierstrassCurve<Fp2<N>> decode_weierstrass_curve(u8 mod_byte_len, FieldExtensio
         input_err("Group order is zero");
     }
 
-    return WeierstrassCurve(a, b, order);
+    return WeierstrassCurve(a, b, order, order_len);
 }
 
 template <usize N>
@@ -176,50 +187,66 @@ CurvePoint<Fp2<N>> decode_g2_point(u8 mod_byte_len, FieldExtension2<N> const &fi
     return CurvePoint(x, y);
 }
 
-// Expects directly data of modulus.
+// Runs non-pairing operation with known limb length
 template <usize N>
-std::vector<std::uint8_t> g2_add(u8 mod_byte_len, Deserializer deserializer)
+std::vector<std::uint8_t> run_operation(u8 operation, u8 mod_byte_len, Deserializer deserializer)
 {
+    // deser Modulus -> Field
     auto modulus = decode_modulus<N>(mod_byte_len, deserializer);
     auto field = PrimeField(modulus);
 
+    // Soulution by extension degree
     auto extension_degree = deserializer.byte("Input is not long enough to get extension degree");
     switch (extension_degree)
     {
     case 2:
     {
-        auto extension2 = decode_fp2_extension(mod_byte_len, field, deserializer);
-        auto wcurve = decode_weierstrass_curve(mod_byte_len, extension2, deserializer);
+        // deser Extension2 & Weierstrass curve
+        auto const extension2 = decode_fp2_extension(mod_byte_len, field, deserializer);
+        auto const wcurve = decode_weierstrass_curve(mod_byte_len, extension2, deserializer);
 
-        auto p_0 = decode_g2_point(mod_byte_len, extension2, deserializer);
-        auto const p_1 = decode_g2_point(mod_byte_len, extension2, deserializer);
+        // Run the operation for the result
+        std::vector<u8> result;
+        switch (operation)
+        {
+        case OPERATION_G2_ADD:
+        {
+            // deser CurvePoints to be added
+            auto p_0 = decode_g2_point(mod_byte_len, extension2, deserializer);
+            auto const p_1 = decode_g2_point(mod_byte_len, extension2, deserializer);
 
-        p_0.add(p_1, wcurve, extension2);
+            // Apply addition
+            p_0.add(p_1, wcurve, extension2);
 
-        std::vector<u8> data;
-        p_0.serialize(mod_byte_len, data);
-        return data;
+            // seri Result
+            p_0.serialize(mod_byte_len, result);
+            break;
+        }
+        case OPERATION_G2_MUL:
+        {
+            // deser CurvePoint & Scalar
+            auto const p_0 = decode_g2_point(mod_byte_len, extension2, deserializer);
+            auto const scalar = decode_scalar(mod_byte_len, wcurve, deserializer);
+
+            // Apply multiplication
+            auto r = p_0.mul(scalar, wcurve, extension2);
+
+            // seri Result
+            r.serialize(mod_byte_len, result);
+            break;
+        }
+        default:
+            unimplemented("");
+        }
+
+        // Done
+        return result;
     }
     case 3:
         input_err("Extension degree 3 is not yet implemented");
 
     default:
         input_err("Invalid extension degree");
-    }
-}
-
-// Runs non-pairing operation with known limb length
-template <usize N>
-std::vector<std::uint8_t> run_operation(u8 operation, u8 mod_byte_len, Deserializer deserializer)
-{
-
-    switch (operation)
-    {
-    case OPERATION_G2_ADD:
-        return g2_add<N>(mod_byte_len, deserializer);
-    default:
-        unimplemented("");
-        break;
     }
 }
 

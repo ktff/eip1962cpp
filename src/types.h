@@ -20,6 +20,9 @@ typedef std::uint16_t u16;
 // C++ version of Rust u32
 typedef std::uint32_t u32;
 
+// C++ version of Rust i32
+typedef std::int32_t i32;
+
 // C++ version of Rust u64
 typedef std::uint64_t u64;
 

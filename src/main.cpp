@@ -30,7 +30,7 @@ int main()
     // Contextes must be valid for the whole scope
     const PrimeField<6> context({0, 0, 0, 0, 0, 372864237846327846});
     const FieldExtension2<6> context2(Fp<6>::from_repr({0, 0, 0, 0, 0, 1243}, context), context);
-    const WeierstrassCurve<Fp<6>> weis(Fp<6>::from_repr({0, 0, 0, 0, 0, 34564356}, context2), Fp<6>::from_repr({0, 0, 0, 0, 0, 235423}, context2), {0});
+    const WeierstrassCurve<Fp<6>> weis(Fp<6>::from_repr({0, 0, 0, 0, 0, 34564356}, context2), Fp<6>::from_repr({0, 0, 0, 0, 0, 235423}, context2), {0}, 1);
 
     CurvePoint<Fp<6>> ca(Fp<6>::from_repr({0, 0, 0, 0, 0, 234234}, context2), Fp<6>::from_repr({0, 0, 0, 0, 0, 124323}, context2), Fp<6>::from_repr({0, 0, 0, 0, 0, 5467657}, context2));
     CurvePoint<Fp<6>> cb(Fp<6>::from_repr({0, 0, 0, 0, 0, 123}, context2), Fp<6>::from_repr({0, 0, 0, 0, 0, 534534}, context2), Fp<6>::from_repr({0, 0, 0, 0, 0, 12423532}, context2));

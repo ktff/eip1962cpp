@@ -68,4 +68,38 @@ public:
     }
 };
 
+class RevBitIteratorDyn
+{
+    std::vector<u64> const &repr;
+    usize at;
+
+public:
+    RevBitIteratorDyn(std::vector<u64> const &repr) : repr(repr), at(repr.size() * LIMB_BITS) {}
+
+    bool get() const
+    {
+        auto i = at / LIMB_BITS;
+        auto off = at - (i * LIMB_BITS);
+        return (repr[i] >> off) & 0x1;
+    }
+
+    /// True if moved
+    bool before()
+    {
+        if (at > 0)
+        {
+            at--;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+};
+
+// a >= b
+// Where a and b are numbers
+bool greater_or_equal_dyn(std::vector<u64> const &a, std::vector<u64> const &b);
+
 #endif
