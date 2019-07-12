@@ -67,7 +67,7 @@ u32 num_bits(std::vector<u64> const &repr)
     return bits;
 }
 
-void left_shift_representation(std::vector<u64> &repr, u64 shift)
+void left_shift(std::vector<u64> &repr, u64 shift)
 {
     auto const num_libs = repr.size();
     if (num_libs == 0)

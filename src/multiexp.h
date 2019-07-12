@@ -4,8 +4,8 @@
 #include "weierstrass/curve.h"
 #include "common.h"
 
-template <class E>
-CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>> pairs, WeierstrassCurve<E> const &curve)
+template <class E, class C>
+CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>> pairs, WeierstrassCurve<E> const &wc, C const &context)
 {
     u32 c;
     if (pairs.size() < 32)
@@ -21,15 +21,15 @@ CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>>
     std::vector<CurvePoint<E>> buckets;
 
     u64 mask = (u64(1) << c) - u64(1);
-    auto cur = 0;
-    auto const num_bits = num_bits(curve.subgroup_order());
-    auto const zero_point = CurvePoint<E>::zero(curve);
+    u32 cur = 0;
+    auto const n_bits = num_bits(wc.subgroup_order());
+    auto const zero_point = CurvePoint<E>::zero(context);
 
-    while (cur <= num_bits)
+    while (cur <= n_bits)
     {
         auto acc = zero_point;
 
-        buckets.resize(0);
+        buckets.resize(0, zero_point);
         buckets.resize((1 << c) - 1, zero_point);
 
         for (auto it = pairs.begin(); it != pairs.end(); it++)
@@ -40,7 +40,7 @@ CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>>
 
             if (index != 0)
             {
-                buckets[index - 1].add_mixed(g);
+                buckets[index - 1].add_mixed(g, wc, context);
             }
 
             left_shift(s, c);
@@ -49,8 +49,8 @@ CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>>
         auto running_sum = zero_point;
         for (auto it = buckets.crbegin(); it != buckets.crend(); it++)
         {
-            running_sum.add(*it);
-            acc.add(running_sum);
+            running_sum.add(*it, wc, context);
+            acc.add(running_sum, wc, context);
         }
 
         windows.push_back(acc);
@@ -62,12 +62,12 @@ CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>>
 
     for (auto it = windows.crbegin(); it != windows.crend(); it++)
     {
-        for (auto i = 0; i < c; i++)
+        for (u32 i = 0; i < c; i++)
         {
-            acc.mul2();
+            acc.mul2(wc);
         }
 
-        acc.add_assign(*it);
+        acc.add(*it, wc, context);
     }
 
     return acc;

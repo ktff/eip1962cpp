@@ -260,6 +260,7 @@ private:
         this->y.sub(c);
     }
 
+public:
     bool
     is_zero() const
     {
@@ -283,7 +284,6 @@ private:
         }
     }
 
-public:
     template <class C>
     void add(CurvePoint<E> const &b, WeierstrassCurve<E> const &wc, C const &context)
     {

@@ -7,6 +7,7 @@
 #include "weierstrass/curve.h"
 #include "extension_towers/fp2.h"
 #include "extension_towers/fp3.h"
+#include "multiexp.h"
 
 typedef std::vector<uint8_t>::const_iterator It;
 
@@ -21,7 +22,7 @@ public:
     u8
     byte(str &err)
     {
-        if (begin != end)
+        if (!ended())
         {
             auto ret = *begin;
             begin++;
@@ -35,7 +36,7 @@ public:
 
     u8 peek_byte(str &err) const
     {
-        if (begin != end)
+        if (!ended())
         {
             return *begin;
         }
@@ -61,6 +62,11 @@ public:
         num.resize((bytes + sizeof(u64) - 1) / sizeof(u64), 0);
         read(bytes, num, err);
         return num;
+    }
+
+    bool ended() const
+    {
+        return begin == end;
     }
 
 private:
@@ -214,7 +220,7 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
 {
     // deser Extension2 & Weierstrass curve
     auto const extension = deser_extension<C, N>(mod_byte_len, field, extension_degree, deserializer);
-    auto const wcurve = decode_weierstrass_curve<C, F, N>(mod_byte_len, extension, deserializer);
+    auto const wc = decode_weierstrass_curve<C, F, N>(mod_byte_len, extension, deserializer);
 
     // Run the operation for the result
     std::vector<u8> result;
@@ -227,7 +233,7 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
         auto const p_1 = decode_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
 
         // Apply addition
-        p_0.add(p_1, wcurve, extension);
+        p_0.add(p_1, wc, extension);
 
         // seri Result
         p_0.serialize(mod_byte_len, result);
@@ -237,10 +243,39 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
     {
         // deser CurvePoint & Scalar
         auto const p_0 = decode_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
-        auto const scalar = decode_scalar(mod_byte_len, wcurve, deserializer);
+        auto const scalar = decode_scalar(mod_byte_len, wc, deserializer);
 
         // Apply multiplication
-        auto r = p_0.mul(scalar, wcurve, extension);
+        auto r = p_0.mul(scalar, wc, extension);
+
+        // seri Result
+        r.serialize(mod_byte_len, result);
+        break;
+    }
+    case OPERATION_G2_MULTIEXP:
+    {
+        // deser (CurvePoint,Scalar) pairs
+        auto const num_pairs = deserializer.byte("Input is not long enough to get number of pairs");
+        if (num_pairs == 0)
+        {
+            input_err("Invalid number of pairs");
+        }
+        std::vector<std::tuple<CurvePoint<F>, std::vector<u64>>> pairs;
+        for (auto i = 0; i < num_pairs; i++)
+        {
+            auto const p = decode_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
+            auto const scalar = decode_scalar(mod_byte_len, wc, deserializer);
+            pairs.push_back(tuple(p, scalar));
+        }
+
+        // Check if all input has been used up
+        if (!deserializer.ended())
+        {
+            input_err("Input length is invalid for number of pairs");
+        }
+
+        // Apply Multiexponentiation
+        auto const r = peepinger(pairs, wc, extension);
 
         // seri Result
         r.serialize(mod_byte_len, result);
@@ -311,30 +346,30 @@ run(std::vector<std::uint8_t> const &input)
             case 3:
             case 4:
                 return run_operation<4>(operation, mod_byte_len, deserializer);
-                // case 5:
-                //     return run_operation<5>(operation, mod_byte_len, deserializer);
-                // case 6:
-                //     return run_operation<6>(operation, mod_byte_len, deserializer);
-                // case 7:
-                //     return run_operation<7>(operation, mod_byte_len, deserializer);
-                // case 8:
-                //     return run_operation<8>(operation, mod_byte_len, deserializer);
-                // case 9:
-                //     return run_operation<9>(operation, mod_byte_len, deserializer);
-                // case 10:
-                //     return run_operation<10>(operation, mod_byte_len, deserializer);
-                // case 11:
-                //     return run_operation<11>(operation, mod_byte_len, deserializer);
-                // case 12:
-                //     return run_operation<12>(operation, mod_byte_len, deserializer);
-                // case 13:
-                //     return run_operation<13>(operation, mod_byte_len, deserializer);
-                // case 14:
-                //     return run_operation<14>(operation, mod_byte_len, deserializer);
-                // case 15:
-                //     return run_operation<15>(operation, mod_byte_len, deserializer);
-                // case 16:
-                //     return run_operation<16>(operation, mod_byte_len, deserializer);
+            case 5:
+                return run_operation<5>(operation, mod_byte_len, deserializer);
+            case 6:
+                return run_operation<6>(operation, mod_byte_len, deserializer);
+            case 7:
+                return run_operation<7>(operation, mod_byte_len, deserializer);
+            case 8:
+                return run_operation<8>(operation, mod_byte_len, deserializer);
+            case 9:
+                return run_operation<9>(operation, mod_byte_len, deserializer);
+            case 10:
+                return run_operation<10>(operation, mod_byte_len, deserializer);
+            case 11:
+                return run_operation<11>(operation, mod_byte_len, deserializer);
+            case 12:
+                return run_operation<12>(operation, mod_byte_len, deserializer);
+            case 13:
+                return run_operation<13>(operation, mod_byte_len, deserializer);
+            case 14:
+                return run_operation<14>(operation, mod_byte_len, deserializer);
+            case 15:
+                return run_operation<15>(operation, mod_byte_len, deserializer);
+            case 16:
+                return run_operation<16>(operation, mod_byte_len, deserializer);
 
             default:
                 unimplemented(stringf("for %u modulus limbs", limb_count));
