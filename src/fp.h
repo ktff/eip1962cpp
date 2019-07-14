@@ -15,9 +15,9 @@ class Fp : public Element<Fp<N>>
     PrimeField<N> const &field;
     Repr<N> repr;
 
+public:
     Fp(Repr<N> repr, PrimeField<N> const &field) : field(field), repr(repr) {}
 
-public:
     static Fp<N> from_repr(Repr<N> repr, PrimeField<N> const &field)
     {
         auto fpo = Fp::from_repr_try(repr, field);

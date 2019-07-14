@@ -5,6 +5,7 @@
 #include "../element.h"
 #include "../fp.h"
 #include "../field.h"
+#include "frobenius.h"
 
 // using namespace cbn;
 using namespace cbn::literals;
@@ -15,11 +16,30 @@ class FieldExtension2 : public PrimeField<N>
     Fp<N> _non_residue;
 
 public:
-    FieldExtension2(Fp<N> non_residue, PrimeField<N> const &field) : PrimeField<N>(field), _non_residue(non_residue) {}
+    std::array<Fp<N>, 2> frobenius_coeffs_c1;
+
+    FieldExtension2(Fp<N> non_residue, PrimeField<N> const &field) : PrimeField<N>(field), _non_residue(non_residue), frobenius_coeffs_c1({Fp<N>::zero(field), Fp<N>::zero(field)})
+    {
+        // calculate_frobenius_coeffs
+
+        // NONRESIDUE**(((q^0) - 1) / 2)
+        auto const f_0 = Fp<N>::one(field);
+
+        // NONRESIDUE**(((q^1) - 1) / 2)
+        auto const f_1 = calc_frobenius_factor(non_residue, field.mod(), 2, "Fp2");
+
+        std::array<Fp<N>, 2> calc_frobenius_coeffs_c1 = {f_0, f_1};
+        frobenius_coeffs_c1 = calc_frobenius_coeffs_c1;
+    }
 
     void mul_by_nonresidue(Fp<N> &num) const
     {
         num.mul(_non_residue);
+    }
+
+    Fp<N> const &non_residue() const
+    {
+        return _non_residue;
     }
 };
 
@@ -27,15 +47,22 @@ template <usize N>
 class Fp2 : public Element<Fp2<N>>
 {
     FieldExtension2<N> const &field;
-    Fp<N> c0, c1;
 
 public:
+    Fp<N> c0, c1;
+
     Fp2(Fp<N> c0, Fp<N> c1, FieldExtension2<N> const &field) : field(field), c0(c0), c1(c1) {}
 
     auto operator=(Fp2<N> const &other)
     {
         c0 = other.c0;
         c1 = other.c1;
+    }
+
+    void mul_by_fp(Fp<N> const &element)
+    {
+        c0.mul(element);
+        c1.mul(element);
     }
 
     // ************************* ELEMENT impl ********************************* //
@@ -183,6 +210,11 @@ public:
     {
         c0.negate();
         c1.negate();
+    }
+
+    void frobenius_map(usize power)
+    {
+        c1.mul(field.frobenius_coeffs_c1[power % 2]);
     }
 
     bool is_zero() const

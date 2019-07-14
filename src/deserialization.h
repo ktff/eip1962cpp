@@ -68,6 +68,11 @@ public:
         return begin == end;
     }
 
+    u32 remaining() const
+    {
+        return end - begin;
+    }
+
 private:
     // Deserializes number in Big endian format with bytes.
     template <class T>
@@ -85,9 +90,9 @@ private:
 };
 
 template <class E>
-std::vector<u64> deserialize_scalar(u8 mod_byte_len, WeierstrassCurve<E> const &wc, Deserializer &deserializer)
+std::vector<u64> deserialize_scalar(WeierstrassCurve<E> const &wc, Deserializer &deserializer)
 {
-    auto scalar = deserializer.dyn_number(mod_byte_len, "Input is not long enough to get scalar");
+    auto scalar = deserializer.dyn_number(wc.order_len(), "Input is not long enough to get scalar");
     if (greater_or_equal(scalar, wc.subgroup_order()))
     {
         input_err("Group order is less or equal scalar");

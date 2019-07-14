@@ -39,7 +39,7 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
     {
         // deser CurvePoint & Scalar
         auto const p_0 = deserialize_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
-        auto const scalar = deserialize_scalar(mod_byte_len, wc, deserializer);
+        auto const scalar = deserialize_scalar(wc, deserializer);
 
         // Apply multiplication
         auto r = p_0.mul(scalar, wc, extension);
@@ -57,18 +57,20 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
         {
             input_err("Invalid number of pairs");
         }
+
+        // Check if remaining input size is exact
+        auto const expected_pair_len = 2 * extension_degree * mod_byte_len + wc.order_len();
+        if (deserializer.remaining() != expected_pair_len)
+        {
+            input_err("Input length is invalid for number of pairs");
+        }
+
         std::vector<std::tuple<CurvePoint<F>, std::vector<u64>>> pairs;
         for (auto i = 0; i < num_pairs; i++)
         {
             auto const p = deserialize_g2_point<C, F, N>(mod_byte_len, extension, deserializer);
-            auto const scalar = deserialize_scalar(mod_byte_len, wc, deserializer);
+            auto const scalar = deserialize_scalar(wc, deserializer);
             pairs.push_back(tuple(p, scalar));
-        }
-
-        // Check if all input has been used up
-        if (!deserializer.ended())
-        {
-            input_err("Input length is invalid for number of pairs");
         }
 
         // Apply Multiexponentiation

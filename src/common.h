@@ -26,6 +26,9 @@ typedef std::int32_t i32;
 // C++ version of Rust u64
 typedef std::uint64_t u64;
 
+// C++ version of Rust i64
+typedef std::int64_t i64;
+
 // C++ version of Rust usize
 typedef std::size_t usize;
 
@@ -39,9 +42,13 @@ typedef const std::string str;
 
 #define unimplemented(ERR) throw std::runtime_error(err_concat("Unimplemented", ERR));
 
+#define unreachable(ERR) throw std::runtime_error(err_concat("Unreachable reached", ERR));
+
 #define api_err(ERR) throw std::domain_error(ERR);
 
 #define input_err(ERR) throw std::domain_error(err_concat("Invalid input parameters, ", ERR));
+
+#define unknown_parameter_err(ERR) throw std::domain_error(err_concat("parameter has value out of bounds, ", ERR));
 
 #define unexpected_zero_err(ERR) throw std::domain_error(err_concat("parameter expected to be non-zero, ", ERR));
 

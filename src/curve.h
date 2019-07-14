@@ -32,6 +32,10 @@ public:
         }
     }
 
+    E const &get_a() const{
+        return a;
+    }
+
     u8 order_len() const
     {
         return order_len_;
@@ -80,6 +84,16 @@ public:
         x = other.x;
         y = other.y;
         z = other.z;
+    }
+
+    E const &get_x() const
+    {
+        return x;
+    }
+
+    E const &get_y() const
+    {
+        return y;
     }
 
     std::tuple<E, E> xy() const
