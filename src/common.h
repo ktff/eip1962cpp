@@ -1,6 +1,9 @@
 #ifndef H_COMMON
 #define H_COMMON
 
+// Comment this define to turn on asserts
+#define NDEBUG
+#include <assert.h>
 #include <optional>
 #include <vector>
 #include <cstdint>

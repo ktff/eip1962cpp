@@ -192,6 +192,8 @@ std::vector<std::uint8_t> run_operation(u8 operation, std::optional<u8> curve_ty
     if (curve_type)
     {
         // Pairing operation
+        assert(operation == OPERATION_PAIRING);
+
         switch (curve_type.value())
         {
         case MNT4:

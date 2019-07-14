@@ -153,6 +153,18 @@ public:
         return z.is_zero();
     }
 
+    bool is_normalized() const
+    {
+        if (is_zero())
+        {
+            return true;
+        }
+
+        auto const one = z.one();
+
+        return z == one;
+    }
+
     void mul2(WeierstrassCurve<E> const &wc)
     {
         switch (wc.ctype())

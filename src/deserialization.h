@@ -89,6 +89,22 @@ private:
     }
 };
 
+// True if minus
+bool deserialize_sign(Deserializer &deserializer)
+{
+    auto sign = deserializer.byte("Input is not long enough to get sign encoding");
+    switch (sign)
+    {
+    case SIGN_PLUS:
+        return false;
+    case SIGN_MINUS:
+        return true;
+
+    default:
+        input_err("sign is not encoded properly");
+    }
+}
+
 template <class E>
 std::vector<u64> deserialize_scalar(WeierstrassCurve<E> const &wc, Deserializer &deserializer)
 {
@@ -114,22 +130,6 @@ std::vector<u64> deserialize_scalar_with_bit_limit(usize bit_limit, Deserializer
         input_err("Number of bits for scalar is too large");
     }
     return num;
-}
-
-// True if minus
-bool deserialize_sign(Deserializer &deserializer)
-{
-    auto sign = deserializer.byte("Input is not long enough to get sign encoding");
-    switch (sign)
-    {
-    case SIGN_PLUS:
-        return false;
-    case SIGN_MINUS:
-        return true;
-
-    default:
-        input_err("sign is not encoded properly");
-    }
 }
 
 // *************************** SPECIAL PRIMITIVE deserialization *********************** //

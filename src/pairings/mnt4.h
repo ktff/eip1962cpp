@@ -85,8 +85,8 @@ private:
         CurvePoint<Fp<N>> const &point,
         CurvePoint<Fp2<N>> const &twist_point, C const &context) const
     {
-        //   debug_assert!(point.is_normalized());
-        // debug_assert!(twist_point.is_normalized());
+        assert(point.is_normalized());
+        assert(twist_point.is_normalized());
         auto const twist_inv = this->twist.inverse().value();
 
         auto const p = precompute_g1(point);
