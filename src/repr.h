@@ -49,15 +49,9 @@ u64 sbb(u64 a, u64 b, u64 &borrow);
 // carry value.
 u64 adc(u64 a, u64 b, u64 &carry);
 
-// // Calculate a + (b * c) + carry, returning the least significant digit
-// // and setting carry to the most significant digit.
-// u64 mac_with_carry(u64 a,u64 b,u64 c,u64 &carry)  {
-//     auto const tmp = (u128::from(a)) + u128::from(b) * u128::from(c) + u128::from(*carry);
-
-//     *carry = (tmp >> 64) as u64;
-
-//     return tmp;
-// }
+/* Function to get no of set bits in binary 
+representation of positive integer n */
+u32 count_ones(u64 n);
 
 // *********************** FUNCTIONS on std::vector<u64> ******************* //
 
@@ -79,6 +73,10 @@ bool greater_or_equal(std::vector<u64> const &a, std::vector<u64> const &b);
 u32 num_bits(std::vector<u64> const &repr);
 
 void left_shift(std::vector<u64> &repr, u64 shift);
+
+std::vector<i64> into_ternary_wnaf(std::vector<u64> const &repr);
+
+u32 calculate_hamming_weight(std::vector<u64> const &repr);
 
 // ********************** HELPER CLASSES ******************* //
 // A is required to have to methods: size() and operator[]

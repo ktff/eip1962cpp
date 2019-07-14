@@ -1,5 +1,5 @@
-#ifndef H_MNT4
-#define H_MNT4
+#ifndef H_MNT4engine
+#define H_MNT4engine
 
 #include "../common.h"
 #include "../curve.h"
@@ -41,7 +41,7 @@ struct PrecomputedG2
 };
 
 template <usize N>
-class MNT4
+class MNT4engine
 {
     std::vector<u64> x;
     bool x_is_negative;
@@ -51,8 +51,8 @@ class MNT4
     Fp2<N> twist;
 
 public:
-    MNT4(std::vector<u64> x, bool x_is_negative, std::vector<u64> exp_w0, std::vector<u64> exp_w1, bool exp_w0_is_negative,
-         WeierstrassCurve<Fp2<N>> const &curve_twist, Fp2<N> twist) : x(x), x_is_negative(x_is_negative), exp_w0(exp_w0), exp_w1(exp_w1), exp_w0_is_negative(exp_w0_is_negative), curve_twist(curve_twist), twist(twist)
+    MNT4engine(std::vector<u64> x, bool x_is_negative, std::vector<u64> exp_w0, std::vector<u64> exp_w1, bool exp_w0_is_negative,
+               WeierstrassCurve<Fp2<N>> const &curve_twist, Fp2<N> twist) : x(x), x_is_negative(x_is_negative), exp_w0(exp_w0), exp_w1(exp_w1), exp_w0_is_negative(exp_w0_is_negative), curve_twist(curve_twist), twist(twist)
     {
     }
 

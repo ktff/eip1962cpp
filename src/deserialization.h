@@ -100,6 +100,38 @@ std::vector<u64> deserialize_scalar(WeierstrassCurve<E> const &wc, Deserializer 
     return scalar;
 }
 
+std::vector<u64> deserialize_scalar_with_bit_limit(usize bit_limit, Deserializer &deserializer)
+{
+    auto const length = deserializer.byte("Input is not long enough to get scalar length");
+    auto const max_length_for_bits = (bit_limit + 7) / 8;
+    if (length > max_length_for_bits)
+    {
+        input_err("Scalar is too larget for bit length");
+    }
+    auto const num = deserializer.dyn_number(length, "Input is not long enough to get scalar");
+    if (num_bits(num) > bit_limit)
+    {
+        input_err("Number of bits for scalar is too large");
+    }
+    return num;
+}
+
+// True if minus
+bool deserialize_sign(Deserializer &deserializer)
+{
+    auto sign = deserializer.byte("Input is not long enough to get sign encoding");
+    switch (sign)
+    {
+    case SIGN_PLUS:
+        return false;
+    case SIGN_MINUS:
+        return true;
+
+    default:
+        input_err("sign is not encoded properly");
+    }
+}
+
 // *************************** SPECIAL PRIMITIVE deserialization *********************** //
 
 template <usize N>
@@ -145,7 +177,30 @@ Fp<N> deserialize_non_residue(u8 mod_byte_len, PrimeField<N> const &field, u8 ex
     return non_residue;
 }
 
-// ********************* OVERLOADED deserializers of Fp2 and Fp3 *********************** //
+u8 deserialize_pairing_curve_type(Deserializer &deserializer)
+{
+    auto const curve_byte = deserializer.byte("Input should be longer than curve type encoding");
+    switch (curve_byte)
+    {
+    case BLS12:
+    case BN:
+    case MNT4:
+    case MNT6:
+        break;
+    default:
+        input_err("Unknown curve type");
+    }
+    return curve_byte;
+}
+
+// ********************* OVERLOADED deserializers of Fp and Fp2 and Fp3 *********************** //
+
+template <usize N>
+Fp<N> deserialize_fpM(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
+{
+    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp_c element"), field);
+    return c0;
+}
 
 template <usize N>
 Fp2<N> deserialize_fpM(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
@@ -167,10 +222,15 @@ Fp3<N> deserialize_fpM(u8 mod_byte_len, FieldExtension3<N> const &field, Deseria
 // ************************* CURVE deserializers ***************************** //
 
 template <class C, class F, usize N>
-WeierstrassCurve<F> deserialize_weierstrass_curve(u8 mod_byte_len, C const &field, Deserializer &deserializer)
+WeierstrassCurve<F> deserialize_weierstrass_curve(u8 mod_byte_len, C const &field, Deserializer &deserializer, bool a_must_be_zero)
 {
     F a = deserialize_fpM(mod_byte_len, field, deserializer);
     F b = deserialize_fpM(mod_byte_len, field, deserializer);
+
+    if (a_must_be_zero && !a.is_zero())
+    {
+        unknown_parameter_err("A parameter must be zero");
+    }
 
     auto order_len = deserializer.byte("Input is not long enough to get group size length");
     auto order = deserializer.dyn_number(order_len, "Input is not long enough to get main group order size");
@@ -189,7 +249,7 @@ WeierstrassCurve<F> deserialize_weierstrass_curve(u8 mod_byte_len, C const &fiel
 }
 
 template <class C, class F, usize N>
-CurvePoint<F> deserialize_g2_point(u8 mod_byte_len, C const &field, Deserializer &deserializer)
+CurvePoint<F> deserialize_curve_point(u8 mod_byte_len, C const &field, Deserializer &deserializer)
 {
     F x = deserialize_fpM(mod_byte_len, field, deserializer);
     F y = deserialize_fpM(mod_byte_len, field, deserializer);

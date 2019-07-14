@@ -58,4 +58,12 @@ std::string err_concat(std::string const &a, std::string const &b);
 
 std::string stringf(const char *format, ...);
 
+enum PairingCurveType
+{
+    ctBLS12,
+    ctBN,
+    ctMNT4,
+    ctMNT6
+};
+
 #endif

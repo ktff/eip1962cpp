@@ -3,6 +3,7 @@
 
 #include "common.h"
 
+// ************************** ABI defined ***************************** //
 static const usize BYTES_FOR_LENGTH_ENCODING = 1;
 
 static const usize CURVE_TYPE_LENGTH = 1;
@@ -34,5 +35,18 @@ static const u8 OPERATION_G2_MUL = 0x05;
 static const u8 OPERATION_G2_MULTIEXP = 0x06;
 
 static const u8 OPERATION_PAIRING = 0x07;
+
+// ****************************** Sane Limits **************************** //
+static const usize MAX_BLS12_X_BIT_LENGTH = 512;
+static const usize MAX_BN_U_BIT_LENGTH = 512;
+
+static const u32 MAX_BLS12_X_HAMMING = 512;
+static const u32 MAX_BN_SIX_U_PLUS_TWO_HAMMING = 512;
+
+static const usize MAX_ATE_PAIRING_ATE_LOOP_COUNT = 2048;
+static const u32 MAX_ATE_PAIRING_ATE_LOOP_COUNT_HAMMING = 2048;
+
+static const usize MAX_ATE_PAIRING_FINAL_EXP_W0_BIT_LENGTH = 2048;
+static const usize MAX_ATE_PAIRING_FINAL_EXP_W1_BIT_LENGTH = 2048;
 
 #endif

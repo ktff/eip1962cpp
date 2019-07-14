@@ -32,8 +32,14 @@ public:
         }
     }
 
-    E const &get_a() const{
+    E const &get_a() const
+    {
         return a;
+    }
+
+    E const &get_b() const
+    {
+        return b;
     }
 
     u8 order_len() const
@@ -107,6 +113,32 @@ public:
         point.normalize();
 
         return tuple(point.x, point.y);
+    }
+
+    bool check_on_curve(WeierstrassCurve<E> const &wc) const
+    {
+        auto rhs = y;
+        rhs.square();
+
+        auto lhs = wc.get_b();
+        auto ax = x;
+        ax.mul(wc.get_a());
+        lhs.add(ax);
+
+        auto x_3 = x;
+        x_3.square();
+        x_3.mul(x);
+        lhs.add(x_3);
+
+        return rhs == lhs;
+    }
+
+    template <class C>
+    bool check_correct_subgroup(WeierstrassCurve<E> const &wc, C const &context) const
+    {
+        auto const p = mul(wc.subgroup_order(), wc, context);
+
+        return p.is_zero();
     }
 
     void serialize(u8 mod_byte_len, std::vector<u8> &data) const

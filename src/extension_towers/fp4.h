@@ -6,7 +6,6 @@
 #include "fp2.h"
 #include "fp3.h"
 #include "../field.h"
-#include "wnaf.h"
 
 using namespace cbn::literals;
 
