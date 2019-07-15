@@ -5,7 +5,7 @@
 #include "../element.h"
 #include "../fp.h"
 #include "../field.h"
-#include "frobenius.h"
+#include "common.h"
 
 // using namespace cbn;
 using namespace cbn::literals;

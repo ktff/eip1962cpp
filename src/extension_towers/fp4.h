@@ -35,7 +35,7 @@ public:
 
     void mul_by_nonresidue(Fp2<N> &el) const
     {
-        // IMPORTANT: This only works cause the structure of extension field for Fp6
+        // IMPORTANT: This only works cause the structure of extension field for Fp6_2
         // is w^2 - u = 0!
         // take an element in Fp4 as 2 over 2 and multiplity
         // (c0 + c1 * u)*u with u^2 - xi = 0 -> (c1*xi + c0 * u)

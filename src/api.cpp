@@ -200,7 +200,7 @@ std::vector<std::uint8_t> run_operation(u8 operation, std::optional<u8> curve_ty
         case MNT4:
             return run_pairing_mnt<Fp2<N>, Fp4<N>, FieldExtension2over2<N>, FieldExtension2<N>, MNT4engine<N>, N>(mod_byte_len, field, 2, deserializer);
         case MNT6:
-            return run_pairing_mnt<Fp3<N>, Fp6<N>, FieldExtension2over3<N>, FieldExtension3<N>, MNT6engine<N>, N>(mod_byte_len, field, 3, deserializer);
+            return run_pairing_mnt<Fp3<N>, Fp6_2<N>, FieldExtension2over3<N>, FieldExtension3<N>, MNT6engine<N>, N>(mod_byte_len, field, 3, deserializer);
         case BLS12:
             unimplemented("");
         case BN:

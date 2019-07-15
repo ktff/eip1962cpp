@@ -38,6 +38,11 @@ public:
         this->repr = other.repr;
     }
 
+    Repr<N> const &representation() const
+    {
+        return repr;
+    }
+
     ~Fp() {}
 
     // ************************* ELEMENT impl ********************************* //

@@ -127,4 +127,34 @@ public:
     }
 };
 
+// A is required to have to methods: size() and operator[]->u64
+template <class A>
+class BitIterator
+{
+    A const &repr;
+    usize at;
+
+public:
+    BitIterator(A const &repr) : repr(repr), at(0)
+    {
+    }
+
+    bool get() const
+    {
+        auto i = at / LIMB_BITS;
+        auto off = at - (i * LIMB_BITS);
+        return (repr[i] >> off) & 0x1;
+    }
+
+    bool ok() const
+    {
+        return at < repr.size() * LIMB_BITS;
+    }
+
+    void next()
+    {
+        at++;
+    }
+};
+
 #endif

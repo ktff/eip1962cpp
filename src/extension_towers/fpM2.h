@@ -12,9 +12,9 @@ using namespace cbn::literals;
 template <class F, class E, usize N>
 class FpM2 : public Element<FpM2<F, E, N>>
 {
-    E const &field;
 
 public:
+    E const &field;
     F c0, c1;
 
     FpM2(F c0, F c1, E const &field) : field(field), c0(c0), c1(c1)
@@ -65,6 +65,11 @@ public:
     void conjugate()
     {
         c1.negate();
+    }
+
+    void frobenius_map(usize power)
+    {
+        field.frobenius_map(*this, power);
     }
 
     // ************************* ELEMENT impl ********************************* //
@@ -226,11 +231,6 @@ public:
     {
         c0.negate();
         c1.negate();
-    }
-
-    void frobenius_map(usize power)
-    {
-        field.frobenius_map(*this, power);
     }
 
     bool is_zero() const

@@ -2,7 +2,8 @@
 #include "api.h"
 // #include "extension_towers/fp2.h"
 // #include "extension_towers/fp3.h"
-// #include "extension_towers/fp6.h"
+#include "extension_towers/fp6_3.h"
+#include "extension_towers/fp12.h"
 // #include "pairings/mnt6.h"
 
 int main()
@@ -21,7 +22,11 @@ int main()
             << "Ok" << std::endl;
     }
 
-    // MNT6engine<4> *ptr;
+    Fp6_3<4> *ptr;
+    Fp12<4> *ptr12;
+    FieldExtension3over2<4> *ptr2;
+    FieldExtension2over3over2<4> *ptr23;
+    WindowExpBase<Fp2<4>> *ptrw;
 
     // // Contextes must be valid for the whole scope
     // const PrimeField<6> context({0, 0, 0, 0, 0, 372864237846327846});

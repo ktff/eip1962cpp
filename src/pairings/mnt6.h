@@ -5,19 +5,19 @@
 #include "../curve.h"
 #include "../fp.h"
 #include "../extension_towers/fp3.h"
-#include "../extension_towers/fp6.h"
+#include "../extension_towers/fp6_2.h"
 #include "mnt.h"
 
 template <usize N>
-class MNT6engine : public MNTengine<Fp3<N>, Fp6<N>, N>
+class MNT6engine : public MNTengine<Fp3<N>, Fp6_2<N>, N>
 {
 public:
     MNT6engine(std::vector<u64> x, bool x_is_negative, std::vector<u64> exp_w0, std::vector<u64> exp_w1, bool exp_w0_is_negative,
-               WeierstrassCurve<Fp3<N>> const &curve_twist, Fp3<N> twist) : MNTengine<Fp3<N>, Fp6<N>, N>(x, x_is_negative, exp_w0, exp_w1, exp_w0_is_negative, curve_twist, twist)
+               WeierstrassCurve<Fp3<N>> const &curve_twist, Fp3<N> twist) : MNTengine<Fp3<N>, Fp6_2<N>, N>(x, x_is_negative, exp_w0, exp_w1, exp_w0_is_negative, curve_twist, twist)
     {
     }
 
-    Fp6<N> final_exponentiation_part_one(Fp6<N> const &elt, Fp6<N> const &elt_inv) const
+    Fp6_2<N> final_exponentiation_part_one(Fp6_2<N> const &elt, Fp6_2<N> const &elt_inv) const
     {
         // (q^3-1)*(q+1)
 

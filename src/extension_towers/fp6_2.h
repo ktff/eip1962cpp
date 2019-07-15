@@ -1,5 +1,5 @@
-#ifndef H_FP6
-#define H_FP6
+#ifndef H_FP6_2
+#define H_FP6_2
 
 #include "../common.h"
 #include "../element.h"
@@ -7,8 +7,6 @@
 #include "fp3.h"
 #include "fpM2.h"
 #include "../field.h"
-
-using namespace cbn::literals;
 
 template <usize N>
 class FieldExtension2over3 : public FieldExtension3<N>
@@ -22,13 +20,13 @@ public:
         auto const f_0 = Fp<N>::one(field);
 
         // NON_REDISUE**(((q^1) - 1) / 6)
-        auto const f_1 = calc_frobenius_factor(field.non_residue(), field.mod(), 6, "Fp6");
+        auto const f_1 = calc_frobenius_factor(field.non_residue(), field.mod(), 6, "Fp6_2");
 
         // NON_REDISUE**(((q^2) - 1) / 6)
         auto const f_2 = Fp<N>::zero(field);
 
         // NON_REDISUE**(((q^3) - 1) / 6)
-        auto const f_3 = calc_frobenius_factor(field.non_residue(), field.mod() * field.mod() * field.mod(), 6, "Fp6");
+        auto const f_3 = calc_frobenius_factor(field.non_residue(), field.mod() * field.mod() * field.mod(), 6, "Fp6_2");
 
         auto const f_4 = Fp<N>::zero(field);
         auto const f_5 = Fp<N>::zero(field);
@@ -39,9 +37,9 @@ public:
 
     void mul_by_nonresidue(Fp3<N> &el) const
     {
-        // IMPORTANT: This only works cause the structure of extension field for Fp6
+        // IMPORTANT: This only works cause the structure of extension field for Fp6_2
         // is w^2 - u = 0!
-        // take an element in Fp6 as 2 over 3 and mutplity
+        // take an element in Fp6_2 as 2 over 3 and mutplity
         // (c0 + c1 * u)*u with u^2 - xi = 0 -> (c1*xi + c0 * u)
         auto c0 = el.c2;
         el.c2 = el.c1;
@@ -63,5 +61,5 @@ public:
 };
 
 template <usize N>
-using Fp6 = FpM2<Fp3<N>, FieldExtension2over3<N>, N>;
+using Fp6_2 = FpM2<Fp3<N>, FieldExtension2over3<N>, N>;
 #endif
