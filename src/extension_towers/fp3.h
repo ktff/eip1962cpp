@@ -14,9 +14,10 @@ template <usize N>
 class FieldExtension3 : public PrimeField<N>
 {
     Fp<N> _non_residue;
-    std::array<Fp<N>, 3> frobenius_coeffs_c1, frobenius_coeffs_c2;
 
 public:
+    std::array<Fp<N>, 3> frobenius_coeffs_c1, frobenius_coeffs_c2;
+
     FieldExtension3(Fp<N> non_residue, PrimeField<N> const &field) : PrimeField<N>(field), _non_residue(non_residue), frobenius_coeffs_c1({Fp<N>::zero(field), Fp<N>::zero(field), Fp<N>::zero(field)}), frobenius_coeffs_c2({Fp<N>::zero(field), Fp<N>::zero(field), Fp<N>::zero(field)})
     {
         // NON_RESIDUE**(((q^0) - 1) / 3)
@@ -47,15 +48,21 @@ public:
     {
         num.mul(_non_residue);
     }
+
+    Fp<N> const &non_residue() const
+    {
+        return _non_residue;
+    }
 };
 
 template <usize N>
 class Fp3 : public Element<Fp3<N>>
 {
     FieldExtension3<N> const &field;
-    Fp<N> c0, c1, c2;
 
 public:
+    Fp<N> c0, c1, c2;
+
     Fp3(Fp<N> c0, Fp<N> c1, Fp<N> c2, FieldExtension3<N> const &field) : field(field), c0(c0), c1(c1), c2(c2) {}
 
     auto operator=(Fp3<N> const &other)
@@ -63,6 +70,13 @@ public:
         c0 = other.c0;
         c1 = other.c1;
         c2 = other.c2;
+    }
+
+    void mul_by_fp(Fp<N> const &element)
+    {
+        c0.mul(element);
+        c1.mul(element);
+        c2.mul(element);
     }
 
     // ************************* ELEMENT impl ********************************* //

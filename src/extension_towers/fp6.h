@@ -22,16 +22,13 @@ public:
         auto const f_0 = Fp<N>::one(field);
 
         // NON_REDISUE**(((q^1) - 1) / 6)
-        auto q_power = field.mod();
-        auto const f_1 = calc_frobenius_factor(field.non_residue(), q_power, 6, "Fp6");
+        auto const f_1 = calc_frobenius_factor(field.non_residue(), field.mod(), 6, "Fp6");
 
         // NON_REDISUE**(((q^2) - 1) / 6)
-        q_power = q_power * field.mod();
         auto const f_2 = Fp<N>::zero(field);
 
         // NON_REDISUE**(((q^3) - 1) / 6)
-        q_power = q_power * field.mod();
-        auto const f_3 = calc_frobenius_factor(field.non_residue(), q_power, 6, "Fp6");
+        auto const f_3 = calc_frobenius_factor(field.non_residue(), field.mod() * field.mod() * field.mod(), 6, "Fp6");
 
         auto const f_4 = Fp<N>::zero(field);
         auto const f_5 = Fp<N>::zero(field);

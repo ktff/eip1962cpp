@@ -4,9 +4,10 @@
 #include "multiexp.h"
 #include "extension_towers/fp4.h"
 #include "pairings/mnt4.h"
+#include "pairings/mnt6.h"
 
 /*
-Execution path goes run -> run_limbed -> run_operation -> {run_pairing_mnt4,run_operation_extension}
+Execution path goes run -> run_limbed -> run_operation -> {run_pairing_mnt,run_operation_extension}
 */
 
 // Executes non-pairing operation with given extension degree
@@ -89,18 +90,18 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
     return result;
 }
 
-template <usize N>
-std::vector<std::uint8_t> run_pairing_mnt4(u8 mod_byte_len, PrimeField<N> const &field, Deserializer deserializer)
+template <class F, class F2, class FEO, class FE, class ENGINE, usize N>
+std::vector<std::uint8_t> run_pairing_mnt(u8 mod_byte_len, PrimeField<N> const &field, u8 extension_degree, Deserializer deserializer)
 {
     // Deser Weierstrass 1 & Extension2
     auto const g1_curve = deserialize_weierstrass_curve<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, deserializer, true);
-    auto const extension2 = FieldExtension2<N>(deserialize_non_residue<N>(mod_byte_len, field, 2, deserializer), field);
-    auto const extension4 = FieldExtension2over2<N>(extension2);
+    auto const extension2 = FE(deserialize_non_residue<N>(mod_byte_len, field, extension_degree * 2, deserializer), field);
+    auto const extension4 = FEO(extension2);
 
     // Construct Weistrass 2
     auto const one = Fp<N>::one(field);
 
-    auto twist = Fp2<N>::zero(extension2);
+    auto twist = F::zero(extension2);
     twist.c1 = one;
 
     auto twist_squared = twist;
@@ -115,7 +116,7 @@ std::vector<std::uint8_t> run_pairing_mnt4(u8 mod_byte_len, PrimeField<N> const 
     auto b_fp2 = twist_cubed;
     b_fp2.mul_by_fp(g1_curve.get_b());
 
-    auto const g2_curve = WeierstrassCurve<Fp2<N>>(a_fp2, b_fp2, g1_curve.subgroup_order(), g1_curve.order_len());
+    auto const g2_curve = WeierstrassCurve<F>(a_fp2, b_fp2, g1_curve.subgroup_order(), g1_curve.order_len());
 
     // Deserialize x
     auto const x = deserialize_scalar_with_bit_limit(MAX_ATE_PAIRING_ATE_LOOP_COUNT, deserializer);
@@ -130,18 +131,18 @@ std::vector<std::uint8_t> run_pairing_mnt4(u8 mod_byte_len, PrimeField<N> const 
     auto const exp_w1 = deserialize_scalar_with_bit_limit(MAX_ATE_PAIRING_FINAL_EXP_W1_BIT_LENGTH, deserializer);
     auto const exp_w0_is_negative = deserialize_sign(deserializer);
 
-    // deser (CurvePoint<Fp<N>>,CurvePoint<Fp2<N>>) pairs
+    // deser (CurvePoint<Fp<N>>,CurvePoint<F>) pairs
     auto const num_pairs = deserializer.byte("Input is not long enough to get number of pairs");
     if (num_pairs == 0)
     {
         input_err("Zero pairs encoded");
     }
 
-    std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<Fp2<N>>>> points;
+    std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> points;
     for (auto i = 0; i < num_pairs; i++)
     {
         auto const g1 = deserialize_curve_point<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, deserializer);
-        auto const g2 = deserialize_curve_point<FieldExtension2<N>, Fp2<N>, N>(mod_byte_len, extension2, deserializer);
+        auto const g2 = deserialize_curve_point<FE, F, N>(mod_byte_len, extension2, deserializer);
 
         if (!g1.check_on_curve(g1_curve) || !g2.check_on_curve(g2_curve))
         {
@@ -156,8 +157,8 @@ std::vector<std::uint8_t> run_pairing_mnt4(u8 mod_byte_len, PrimeField<N> const 
         points.push_back(std::tuple(g1, g2));
     }
 
-    // Construct MNT4
-    MNT4engine<N> const engine(x, x_is_negative, exp_w0, exp_w1, exp_w0_is_negative, g2_curve, twist);
+    // Construct MNT engine
+    ENGINE const engine(x, x_is_negative, exp_w0, exp_w1, exp_w0_is_negative, g2_curve, twist);
 
     // Execute pairing
     auto const opairing_result = engine.pair(points, extension4);
@@ -167,7 +168,7 @@ std::vector<std::uint8_t> run_pairing_mnt4(u8 mod_byte_len, PrimeField<N> const 
     }
 
     // Finish
-    auto const one_fp4 = Fp4<N>::one(extension4);
+    auto const one_fp4 = F2::one(extension4);
     auto const pairing_result = opairing_result.value();
     std::vector<std::uint8_t> result;
     if (pairing_result == one_fp4)
@@ -197,9 +198,9 @@ std::vector<std::uint8_t> run_operation(u8 operation, std::optional<u8> curve_ty
         switch (curve_type.value())
         {
         case MNT4:
-            return run_pairing_mnt4(mod_byte_len, field, deserializer);
+            return run_pairing_mnt<Fp2<N>, Fp4<N>, FieldExtension2over2<N>, FieldExtension2<N>, MNT4engine<N>, N>(mod_byte_len, field, 2, deserializer);
         case MNT6:
-            unimplemented("");
+            return run_pairing_mnt<Fp3<N>, Fp6<N>, FieldExtension2over3<N>, FieldExtension3<N>, MNT6engine<N>, N>(mod_byte_len, field, 3, deserializer);
         case BLS12:
             unimplemented("");
         case BN:

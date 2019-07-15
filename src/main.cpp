@@ -2,8 +2,8 @@
 #include "api.h"
 // #include "extension_towers/fp2.h"
 // #include "extension_towers/fp3.h"
-#include "extension_towers/fp6.h"
-#include "pairings/mnt6.h"
+// #include "extension_towers/fp6.h"
+// #include "pairings/mnt6.h"
 
 int main()
 {
