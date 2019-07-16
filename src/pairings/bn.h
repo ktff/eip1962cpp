@@ -11,12 +11,26 @@ class BNengine : public Bengine<N>
 
 public:
     BNengine(std::vector<u64> u,
-             std::vector<u64> six_u_plus_2,
              bool u_is_negative,
              TwistType twist_type,
              WeierstrassCurve<Fp2<N>> const &curve_twist,
-             Fp2<N> non_residue_in_p_minus_one_over_2) : Bengine<N>(u, u_is_negative, twist_type, curve_twist), six_u_plus_2(six_u_plus_2),
-                                                         non_residue_in_p_minus_one_over_2(non_residue_in_p_minus_one_over_2) {}
+             Fp2<N> const &non_residue) : Bengine<N>(u, u_is_negative, twist_type, curve_twist),
+                                          non_residue_in_p_minus_one_over_2(non_residue)
+    {
+        // Calculate six_u_plus_two
+        six_u_plus_2 = this->u;
+        mul_scalar(six_u_plus_2, 6);
+        add_scalar(six_u_plus_2, 2);
+        if (calculate_hamming_weight(six_u_plus_2) > MAX_BN_SIX_U_PLUS_TWO_HAMMING)
+        {
+            input_err("6*U + 2 has too large hamming weight");
+        }
+
+        // Calculate non_residue_in_p_minus_one_over_2
+        constexpr Repr<N> one = {1};
+        auto const p_minus_one_over_2 = cbn::shift_right(non_residue.field.mod() - one, 1);
+        non_residue_in_p_minus_one_over_2 = non_residue.pow(p_minus_one_over_2);
+    }
 
 protected:
     Fp12<N> miller_loop(std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<Fp2<N>>>> const &points, FieldExtension2over3over2<N> const &context) const

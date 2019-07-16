@@ -2,6 +2,7 @@
 #define H_BLS12
 
 #include "b_engine.h"
+#include "../constants.h"
 
 template <usize N>
 class BLS12engine : public Bengine<N>
@@ -11,7 +12,13 @@ public:
     BLS12engine(std::vector<u64> u,
                 bool u_is_negative,
                 TwistType twist_type,
-                WeierstrassCurve<Fp2<N>> const &curve_twist) : Bengine<N>(u, u_is_negative, twist_type, curve_twist) {}
+                WeierstrassCurve<Fp2<N>> const &curve_twist, Fp2<N> const &non_residue) : Bengine<N>(u, u_is_negative, twist_type, curve_twist)
+    {
+        if (calculate_hamming_weight(this->u) > MAX_BLS12_X_HAMMING)
+        {
+            input_err("X has too large hamming weight");
+        }
+    }
 
 protected:
     Fp12<N> miller_loop(std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<Fp2<N>>>> const &points, FieldExtension2over3over2<N> const &context) const

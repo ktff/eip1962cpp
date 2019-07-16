@@ -46,9 +46,8 @@ public:
 template <usize N>
 class Fp2 : public Element<Fp2<N>>
 {
-    FieldExtension2<N> const &field;
-
 public:
+    FieldExtension2<N> const &field;
     Fp<N> c0, c1;
 
     Fp2(Fp<N> c0, Fp<N> c1, FieldExtension2<N> const &field) : field(field), c0(c0), c1(c1) {}

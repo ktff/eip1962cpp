@@ -6,6 +6,7 @@
 #include "pairings/mnt4.h"
 #include "pairings/mnt6.h"
 #include "pairings/bn.h"
+#include "pairings/bls12.h"
 
 /*
 Execution path goes run -> run_limbed -> run_operation -> {run_pairing_mnt,run_pairing_bn,run_operation_extension}
@@ -91,8 +92,8 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
     return result;
 }
 
-template <usize N>
-std::vector<std::uint8_t> run_pairing_bn(u8 mod_byte_len, PrimeField<N> const &field, Deserializer deserializer)
+template <class E, usize N>
+std::vector<std::uint8_t> run_pairing_b(u8 mod_byte_len, PrimeField<N> const &field, usize max_u_bit_length, Deserializer deserializer)
 {
     // Deser Weierstrass 1 & Extension2
     auto const g1_curve = deserialize_weierstrass_curve<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, deserializer, true);
@@ -134,28 +135,14 @@ std::vector<std::uint8_t> run_pairing_bn(u8 mod_byte_len, PrimeField<N> const &f
     auto const g2_curve = WeierstrassCurve(a_fp2, b_fp2, g1_curve.subgroup_order(), g1_curve.order_len());
 
     // Decode u and it's sign
-    auto const u = deserialize_scalar_with_bit_limit(MAX_BN_U_BIT_LENGTH, deserializer);
+    auto const u = deserialize_scalar_with_bit_limit(max_u_bit_length, deserializer);
     auto const u_is_negative = deserialize_sign(deserializer);
-
-    // Calculate six_u_plus_two
-    auto six_u_plus_two = u;
-    mul_scalar(six_u_plus_two, 6);
-    add_scalar(six_u_plus_two, 2);
-    if (calculate_hamming_weight(six_u_plus_two) > MAX_BN_SIX_U_PLUS_TWO_HAMMING)
-    {
-        input_err("6*U + 2 has too large hamming weight");
-    }
-
-    // Calculate non_residue_in_p_minus_one_over_2
-    constexpr Repr<N> one = {1};
-    auto const p_minus_one_over_2 = cbn::shift_right(field.mod() - one, 1);
-    Fp2<N> const non_residue_in_p_minus_one_over_2 = e6_non_residue.pow(p_minus_one_over_2);
 
     // deser (CurvePoint<Fp<N>>,CurvePoint<F>) pairs
     auto const points = deserialize_points<N, Fp2<N>>(mod_byte_len, extension2, g1_curve, g2_curve, deserializer);
 
     // Construct BN engine
-    auto const engine = BNengine(u, six_u_plus_two, u_is_negative, twist_type, g2_curve, non_residue_in_p_minus_one_over_2);
+    E const engine(u, u_is_negative, twist_type, g2_curve, e6_non_residue);
 
     // Execute pairing
     auto const opairing_result = engine.pair(points, extension12);
@@ -270,9 +257,9 @@ std::vector<std::uint8_t> run_operation(u8 operation, std::optional<u8> curve_ty
         case MNT6:
             return run_pairing_mnt<Fp3<N>, Fp6_2<N>, FieldExtension2over3<N>, FieldExtension3<N>, MNT6engine<N>, N>(mod_byte_len, field, 3, deserializer);
         case BLS12:
-            unimplemented("");
+            return run_pairing_b<BLS12engine<N>, N>(mod_byte_len, field, MAX_BLS12_X_BIT_LENGTH, deserializer);
         case BN:
-            return run_pairing_bn<N>(mod_byte_len, field, deserializer);
+            return run_pairing_b<BNengine<N>, N>(mod_byte_len, field, MAX_BN_U_BIT_LENGTH, deserializer);
 
         default:
             unreachable("");
