@@ -4,7 +4,7 @@
 // #include "extension_towers/fp3.h"
 #include "extension_towers/fp6_3.h"
 #include "extension_towers/fp12.h"
-#include "pairings/bn.h"
+#include "pairings/bls12.h"
 
 int main()
 {
@@ -27,7 +27,7 @@ int main()
     FieldExtension3over2<4> *ptr2;
     FieldExtension2over3over2<4> *ptr23;
     WindowExpBase<Fp2<4>> *ptrw;
-    BNengine<4> *ptrbe;
+    BLS12engine<4> *ptrbe;
     ptrbe->pair(std::vector<std::tuple<CurvePoint<Fp<4>>, CurvePoint<Fp2<4>>>>(), *ptr23);
 
     // // Contextes must be valid for the whole scope
