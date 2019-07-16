@@ -6,7 +6,6 @@
 #include "repr.h"
 #include "field.h"
 
-// using namespace cbn;
 using namespace cbn::literals;
 
 template <usize N>

@@ -14,6 +14,7 @@ public:
                 TwistType twist_type,
                 WeierstrassCurve<Fp2<N>> const &curve_twist, Fp2<N> const &non_residue) : Bengine<N>(u, u_is_negative, twist_type, curve_twist)
     {
+        UNUSED(non_residue);
         if (calculate_hamming_weight(this->u) > MAX_BLS12_X_HAMMING)
         {
             input_err("X has too large hamming weight");

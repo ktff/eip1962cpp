@@ -80,7 +80,7 @@ protected:
         this->for_ell(f, n, g1_references, prepared_coeffs, pc_indexes);
         this->for_ell(f, n, g1_references, prepared_coeffs, pc_indexes);
 
-        for (auto j = 0; j < n; j++)
+        for (usize j = 0; j < n; j++)
         {
             assert(pc_indexes[j] == prepared_coeffs[j].size());
         }

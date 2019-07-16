@@ -134,7 +134,6 @@ protected:
         // - 2*Y*Z
         h.negate();
 
-        // i.mul_by_nonresidue(this->fp6_extension);
         switch (twist_type)
         {
         case M:
@@ -142,6 +141,7 @@ protected:
         case D: // (0, 3, 4) = (-2*Y*Z, 3*X^2, 3*b*Z^2 - Y^2)
             return std::tuple(h, j_by_three, i);
         }
+        unreachable("");
     }
 
     ThreePoint<N> addition_step(
@@ -218,7 +218,6 @@ protected:
         theta.negate();
 
         // lambda.negate();
-        // j.mul_by_nonresidue(this->fp6_extension);
         switch (twist_type)
         {
         case M:
@@ -226,11 +225,12 @@ protected:
         case D: // (0, 3, 4) = (lambda, -theta, Theta*x - Lambda*y)
             return std::tuple(lambda, theta, j);
         }
+        unreachable("");
     }
 
     void for_ell(Fp12<N> &f, usize n, std::vector<CurvePoint<Fp<N>>> const &g1_references, std::vector<std::vector<ThreePoint<N>>> const &prepared_coeffs, std::vector<usize> &pc_indexes) const
     {
-        for (auto j = 0; j < n; j++)
+        for (usize j = 0; j < n; j++)
         {
             auto const p = g1_references[j];
             auto const coeffs = prepared_coeffs[j][pc_indexes[j]];

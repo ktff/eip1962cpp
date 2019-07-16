@@ -9,7 +9,7 @@
 #include "pairings/bls12.h"
 
 /*
-Execution path goes run -> run_limbed -> run_operation -> {run_pairing_mnt,run_pairing_bn,run_operation_extension}
+Execution path goes run -> run_limbed -> run_operation -> {run_pairing_mnt,run_pairing_b,run_operation_extension}
 */
 
 // Executes non-pairing operation with given extension degree
@@ -102,7 +102,7 @@ std::vector<std::uint8_t> run_pairing_b(u8 mod_byte_len, PrimeField<N> const &fi
     // Deser Extension6 & TwistType
     auto const e6_non_residue = deserialize_non_residue<N, Fp2<N>>(mod_byte_len, extension2, 6, deserializer);
     auto const twist_type = deserialize_pairing_twist_type(deserializer);
-    auto exp_base = WindowExpBase<Fp2<N>>(e6_non_residue, Fp2<N>::one(extension2), 8, 7);
+    auto exp_base = WindowExpBase<Fp2<N>>(e6_non_residue, Fp2<N>::one(extension2), 8);
     auto const extension6 = FieldExtension3over2(e6_non_residue, extension2, exp_base);
 
     // Construct Extension12

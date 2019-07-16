@@ -55,19 +55,13 @@ typedef const std::string str;
 
 #define unexpected_zero_err(ERR) throw std::domain_error(err_concat("parameter expected to be non-zero, ", ERR));
 
+#define UNUSED(x) (void)(x)
+
 // **************** FUNCTIONS ********************* //
 
 std::string err_concat(std::string const &a, std::string const &b);
 
 std::string stringf(const char *format, ...);
-
-// enum PairingCurveType
-// {
-//     ctBLS12,
-//     ctBN,
-//     ctMNT4,
-//     ctMNT6
-// };
 
 enum TwistType
 {

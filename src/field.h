@@ -10,8 +10,6 @@ class PrimeField
 {
     Repr<N> modulus;
     u64 mont_power_;
-    // u64 modulus_bits;
-
     Repr<N> mont_r_;
     Repr<N> mont_r2_;
     u64 mont_inv_;

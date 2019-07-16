@@ -58,7 +58,7 @@ class WindowExpBase
     std::vector<E> bases;
 
 public:
-    WindowExpBase(E base, E one, usize window, usize num_scalars) : window_size(window), one(one)
+    WindowExpBase(E base, E one, usize window) : window_size(window), one(one)
     {
         bases = calculate_window_table(base, window);
     }
@@ -81,7 +81,7 @@ public:
             else if (w != 0)
             {
                 found_nonzero = true;
-                for (auto i = 0; i < window_size; i++)
+                for (usize i = 0; i < window_size; i++)
                 {
                     res.square();
                 }
@@ -145,7 +145,7 @@ public:
         }
 
         auto const n = result.size();
-        for (auto i = 0; i < n; i++)
+        for (usize i = 0; i < n; i++)
         {
             if (result.size() > 0)
             {

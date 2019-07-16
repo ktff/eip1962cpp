@@ -173,14 +173,14 @@ public:
     static Fp6_3<N> one(C const &context)
     {
         FieldExtension3over2<N> const &field = context;
-        return Fp6_3<N>(Fp2<N>::one(context), Fp2<N>::zero(context), Fp2<N>::zero(context), context);
+        return Fp6_3<N>(Fp2<N>::one(context), Fp2<N>::zero(context), Fp2<N>::zero(context), field);
     }
 
     template <class C>
     static Fp6_3<N> zero(C const &context)
     {
         FieldExtension3over2<N> const &field = context;
-        return Fp6_3<N>(Fp2<N>::zero(context), Fp2<N>::zero(context), Fp2<N>::zero(context), context);
+        return Fp6_3<N>(Fp2<N>::zero(context), Fp2<N>::zero(context), Fp2<N>::zero(context), field);
     }
 
     Fp6_3<N> one() const

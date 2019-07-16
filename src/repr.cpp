@@ -194,7 +194,7 @@ u32 num_bits(std::vector<u64> const &repr)
 
 void add_scalar(std::vector<u64> &repr, u64 value)
 {
-    for (auto i = 0; value > 0; i++)
+    for (usize i = 0; value > 0; i++)
     {
         if (i >= repr.size())
         {
@@ -209,7 +209,7 @@ void add_scalar(std::vector<u64> &repr, u64 value)
 void mul_scalar(std::vector<u64> &repr, const u64 scalar)
 {
     u64 carry = 0;
-    for (auto i = 0; i < repr.size(); i++)
+    for (usize i = 0; i < repr.size(); i++)
     {
         repr[i] = mul_with_carry(repr[i], scalar, carry);
     }
