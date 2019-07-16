@@ -44,19 +44,77 @@ public:
         FieldExtension2<N>::mul_by_nonresidue(e0);
         el.c0 = e0;
     }
+};
 
-    void frobenius_map(FpM2<Fp2<N>, FieldExtension2over2<N>, N> &fp, usize power) const
+template <usize N>
+class Fp4 : public FpM2<Fp2<N>, FieldExtension2over2<N>, Fp4<N>, N>
+{
+public:
+    Fp4(Fp2<N> c0, Fp2<N> c1, FieldExtension2over2<N> const &field) : FpM2<Fp2<N>, FieldExtension2over2<N>, Fp4<N>, N>(c0, c1, field)
+    {
+    }
+
+    auto operator=(Fp4<N> const &other)
+    {
+        this->c0 = other.c0;
+        this->c1 = other.c1;
+    }
+
+    void frobenius_map(usize power)
     {
         if (power != 1 && power != 2)
         {
             unreachable(stringf("can not reach power %u", power));
         }
-        fp.c0.frobenius_map(power);
-        fp.c1.frobenius_map(power);
-        fp.c1.mul_by_fp(frobenius_coeffs_c1[power % 4]);
+        this->c0.frobenius_map(power);
+        this->c1.frobenius_map(power);
+        this->c1.mul_by_fp(this->field.frobenius_coeffs_c1[power % 4]);
+    }
+
+    // ************************* ELEMENT impl ********************************* //
+
+    template <class C>
+    static Fp4<N> one(C const &context)
+    {
+        FieldExtension2over2<N> const &field = context;
+        return Fp4<N>(Fp2<N>::one(context), Fp2<N>::zero(context), field);
+    }
+
+    template <class C>
+    static Fp4<N> zero(C const &context)
+    {
+        FieldExtension2over2<N> const &field = context;
+        return Fp4<N>(Fp2<N>::zero(context), Fp2<N>::zero(context), field);
+    }
+
+    Fp4<N> one() const
+    {
+        return Fp4::one(this->field);
+    }
+
+    Fp4<N> zero() const
+    {
+        return Fp4::zero(this->field);
+    }
+
+    Fp4<N> &self()
+    {
+        return *this;
+    }
+
+    Fp4<N> const &self() const
+    {
+        return *this;
+    }
+
+    bool operator==(Fp4<N> const &other) const
+    {
+        return this->c0 == other.c0 && this->c1 == other.c1;
+    }
+
+    bool operator!=(Fp4<N> const &other) const
+    {
+        return !(*this == other);
     }
 };
-
-template <usize N>
-using Fp4 = FpM2<Fp2<N>, FieldExtension2over2<N>, N>;
 #endif

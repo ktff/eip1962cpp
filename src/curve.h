@@ -68,11 +68,12 @@ public:
 template <class E>
 class CurvePoint
 {
+
+public:
     E x;
     E y;
     E z;
 
-public:
     CurvePoint(E x, E y, E z) : x(x), y(y), z(z) {}
 
     CurvePoint(E x, E y) : CurvePoint(x, y, x.one())
@@ -163,6 +164,14 @@ public:
         auto const one = z.one();
 
         return z == one;
+    }
+
+    void negate()
+    {
+        if (!is_zero())
+        {
+            y.negate();
+        }
     }
 
     void mul2(WeierstrassCurve<E> const &wc)

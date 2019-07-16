@@ -9,8 +9,8 @@
 
 using namespace cbn::literals;
 
-template <class F, class E, usize N>
-class FpM2 : public Element<FpM2<F, E, N>>
+template <class F, class E, class P, usize N>
+class FpM2 : public Element<P>
 {
 
 public:
@@ -21,16 +21,16 @@ public:
     {
     }
 
-    auto operator=(FpM2<F, E, N> const &other)
+    auto operator=(P const &other)
     {
         c0 = other.c0;
         c1 = other.c1;
     }
 
-    FpM2<F, E, N> cyclotomic_exp(std::vector<u64> const &exp) const
+    P cyclotomic_exp(std::vector<u64> const &exp) const
     {
-        auto res = one();
-        auto self_inverse = *this;
+        auto res = this->one();
+        auto self_inverse = this->self();
         self_inverse.conjugate();
 
         auto found_nonzero = false;
@@ -50,7 +50,7 @@ public:
 
                 if (value > 0)
                 {
-                    res.mul(*this);
+                    res.mul(this->self());
                 }
                 else
                 {
@@ -67,46 +67,7 @@ public:
         c1.negate();
     }
 
-    void frobenius_map(usize power)
-    {
-        field.frobenius_map(*this, power);
-    }
-
     // ************************* ELEMENT impl ********************************* //
-
-    template <class C>
-    static FpM2<F, E, N> one(C const &context)
-    {
-        E const &field = context;
-        return FpM2<F, E, N>(F::one(context), F::zero(context), field);
-    }
-
-    template <class C>
-    static FpM2<F, E, N> zero(C const &context)
-    {
-        E const &field = context;
-        return FpM2<F, E, N>(F::zero(context), F::zero(context), field);
-    }
-
-    FpM2<F, E, N> one() const
-    {
-        return FpM2::one(field);
-    }
-
-    FpM2<F, E, N> zero() const
-    {
-        return FpM2::zero(field);
-    }
-
-    FpM2<F, E, N> &self()
-    {
-        return *this;
-    }
-
-    FpM2<F, E, N> const &self() const
-    {
-        return *this;
-    }
 
     void serialize(u8 mod_byte_len, std::vector<u8> &data) const
     {
@@ -114,7 +75,7 @@ public:
         c1.serialize(mod_byte_len, data);
     }
 
-    Option<FpM2<F, E, N>> inverse() const
+    Option<P> inverse() const
     {
         if (is_zero())
         {
@@ -143,7 +104,7 @@ public:
                 e1.mul(v1);
                 e1.negate();
 
-                return FpM2(e0, e1, field);
+                return P(e0, e1, field);
             }
             else
             {
@@ -185,7 +146,7 @@ public:
         c1.mul2();
     }
 
-    void mul(FpM2<F, E, N> const &other)
+    void mul(P const &other)
     {
         auto const a0 = c0;
         auto const b0 = c1;
@@ -215,13 +176,13 @@ public:
         c1 = e1;
     }
 
-    void sub(FpM2<F, E, N> const &e)
+    void sub(P const &e)
     {
         c0.sub(e.c0);
         c1.sub(e.c1);
     }
 
-    void add(FpM2<F, E, N> const &e)
+    void add(P const &e)
     {
         c0.add(e.c0);
         c1.add(e.c1);
@@ -236,16 +197,6 @@ public:
     bool is_zero() const
     {
         return c0.is_zero() && c1.is_zero();
-    }
-
-    bool operator==(FpM2<F, E, N> const &other) const
-    {
-        return c0 == other.c0 && c1 == other.c1;
-    }
-
-    bool operator!=(FpM2<F, E, N> const &other) const
-    {
-        return !(*this == other);
     }
 };
 

@@ -65,10 +65,11 @@ public:
 template <usize N>
 class Fp6_3 : public Element<Fp6_3<N>>
 {
+
+public:
     FieldExtension3over2<N> const &field;
     Fp2<N> c0, c1, c2;
 
-public:
     Fp6_3(Fp2<N> c0, Fp2<N> c1, Fp2<N> c2, FieldExtension3over2<N> const &field) : field(field), c0(c0), c1(c1), c2(c2) {}
 
     auto operator=(Fp6_3<N> const &other)
@@ -93,20 +94,93 @@ public:
         c2.mul(field.frobenius_coeffs_c2[power % 6]);
     }
 
+    void mul_by_1(Fp2<N> const &c1)
+    {
+        auto b_b = this->c1;
+        b_b.mul(c1);
+
+        auto t1 = c1;
+        {
+            auto tmp = this->c1;
+            tmp.add(this->c2);
+
+            t1.mul(tmp);
+            t1.sub(b_b);
+            field.mul_by_nonresidue(t1);
+        }
+
+        auto t2 = c1;
+        {
+            auto tmp = this->c0;
+            tmp.add(this->c1);
+
+            t2.mul(tmp);
+            t2.sub(b_b);
+        }
+
+        this->c0 = t1;
+        this->c1 = t2;
+        this->c2 = b_b;
+    }
+
+    void mul_by_01(Fp2<N> const &c0, Fp2<N> const &c1)
+    {
+        auto a_a = this->c0;
+        auto b_b = this->c1;
+        a_a.mul(c0);
+        b_b.mul(c1);
+
+        auto t1 = c1;
+        {
+            auto tmp = this->c1;
+            tmp.add(this->c2);
+
+            t1.mul(tmp);
+            t1.sub(b_b);
+            field.mul_by_nonresidue(t1);
+            t1.add(a_a);
+        }
+
+        auto t3 = c0;
+        {
+            auto tmp = this->c0;
+            tmp.add(this->c2);
+
+            t3.mul(tmp);
+            t3.sub(a_a);
+            t3.add(b_b);
+        }
+
+        auto t2 = c0;
+        t2.add(c1);
+        {
+            auto tmp = this->c0;
+            tmp.add(this->c1);
+
+            t2.mul(tmp);
+            t2.sub(a_a);
+            t2.sub(b_b);
+        }
+
+        this->c0 = t1;
+        this->c1 = t2;
+        this->c2 = t3;
+    }
+
     // ************************* ELEMENT impl ********************************* //
 
     template <class C>
     static Fp6_3<N> one(C const &context)
     {
         FieldExtension3over2<N> const &field = context;
-        return Fp6_3<N>(Fp2<N>::one(context), Fp2<N>::zero(context), Fp2<N>::zero(context));
+        return Fp6_3<N>(Fp2<N>::one(context), Fp2<N>::zero(context), Fp2<N>::zero(context), context);
     }
 
     template <class C>
     static Fp6_3<N> zero(C const &context)
     {
         FieldExtension3over2<N> const &field = context;
-        return Fp6_3<N>(Fp2<N>::zero(context), Fp2<N>::zero(context), Fp2<N>::zero(context));
+        return Fp6_3<N>(Fp2<N>::zero(context), Fp2<N>::zero(context), Fp2<N>::zero(context), context);
     }
 
     Fp6_3<N> one() const
@@ -176,7 +250,7 @@ public:
 
         if (auto const t = tmp1.inverse())
         {
-            auto tmp = Fp6_3<N>(t, t, t, field);
+            auto tmp = Fp6_3<N>(t.value(), t.value(), t.value(), field);
             tmp.c0.mul(e0);
             tmp.c1.mul(e1);
             tmp.c2.mul(e2);
@@ -247,7 +321,7 @@ public:
             t1.mul(tmp);
             t1.sub(b_b);
             t1.sub(c_c);
-            field.mul_by_nonresidue(t1.mul_by_nonresidue);
+            field.mul_by_nonresidue(t1);
             t1.add(a_a);
         }
 

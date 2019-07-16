@@ -66,18 +66,21 @@ public:
 };
 
 template <usize N>
-using FpM12 = FpM2<Fp6_3<N>, FieldExtension2over3over2<N>, N>;
-
-template <usize N>
-class Fp12 : public FpM12<N>
+class Fp12 : public FpM2<Fp6_3<N>, FieldExtension2over3over2<N>, Fp12<N>, N>
 {
 public:
-    Fp12(FpM12<N> fp) : FpM12<N>(fp) {}
+    Fp12(Fp6_3<N> c0, Fp6_3<N> c1, FieldExtension2over3over2<N> const &field) : FpM2<Fp6_3<N>, FieldExtension2over3over2<N>, Fp12<N>, N>(c0, c1, field) {}
 
-    Fp12(Fp6_3<N> c0, Fp6_3<N> c1, FieldExtension2over3over2<N> const &field) : FpM12<N>(c0, c1, field) {}
+    auto operator=(Fp12<N> const &other)
+    {
+        this->c0 = other.c0;
+        this->c1 = other.c1;
+    }
 
     void cyclotomic_square()
     {
+        FieldExtension3over2<N> const &field_2 = this->field;
+
         auto const z0 = this->c0.c0;
         auto const z4 = this->c0.c1;
         auto const z3 = this->c0.c2;
@@ -92,11 +95,11 @@ public:
         auto a0_0 = z0;
         a0_0.add(z1);
         auto a1_0 = z1;
-        FpM12<N>::field.mul_by_nonresidue(a1_0);
+        field_2.mul_by_nonresidue(a1_0);
         a1_0.add(z0);
 
         auto a2_0 = tmp;
-        FpM12<N>::field.mul_by_nonresidue(a2_0);
+        field_2.mul_by_nonresidue(a2_0);
 
         auto t0 = a0_0;
         t0.mul(a1_0);
@@ -112,11 +115,11 @@ public:
         auto a0_1 = z2;
         a0_1.add(z3);
         auto a1_1 = z3;
-        FpM12<N>::field.mul_by_nonresidue(a1_1);
+        field_2.mul_by_nonresidue(a1_1);
         a1_1.add(z2);
 
         auto a2_1 = tmp2;
-        FpM12<N>::field.mul_by_nonresidue(a2_1);
+        field_2.mul_by_nonresidue(a2_1);
 
         auto t2 = a0_1;
         t2.mul(a1_1);
@@ -133,11 +136,11 @@ public:
         auto a0_2 = z4;
         a0_2.add(z5);
         auto a1_2 = z5;
-        FpM12<N>::field.mul_by_nonresidue(a1_2);
+        field_2.mul_by_nonresidue(a1_2);
         a1_2.add(z4);
 
         auto a2_2 = tmp3;
-        FpM12<N>::field.mul_by_nonresidue(a2_2);
+        field_2.mul_by_nonresidue(a2_2);
 
         auto t4 = a0_2;
         t4.mul(a1_2);
@@ -168,7 +171,7 @@ public:
 
         // g2 = 3 * (xi * t5) + 2 * z2
         auto tmp4 = t5;
-        FpM12<N>::field.mul_by_nonresidue(tmp4);
+        field_2.mul_by_nonresidue(tmp4);
         auto g2 = tmp4;
         g2.add(z2);
         g2.mul2();
@@ -246,27 +249,74 @@ public:
             .mul(this->field.frobenius_coeffs_c1[power % 12]);
     }
 
+    void mul_by_034(Fp2<N> const &c0, Fp2<N> const &c3, Fp2<N> const &c4)
+    {
+        auto a = this->c0;
+        a.c0.mul(c0);
+        a.c1.mul(c0);
+        a.c2.mul(c0);
+
+        auto b = this->c1;
+        b.mul_by_01(c3, c4);
+
+        auto t0 = c0;
+        t0.add(c3);
+
+        auto e = this->c0;
+        e.add(this->c1);
+        e.mul_by_01(t0, c4);
+
+        this->c1 = e;
+        this->c1.sub(a);
+        this->c1.sub(b);
+
+        auto t1 = b;
+        this->field.mul_by_nonresidue(t1);
+        this->c0 = a;
+        this->c0.add(t1);
+    }
+
+    void mul_by_014(Fp2<N> const &c0, Fp2<N> const &c1, Fp2<N> const &c4)
+    {
+        auto aa = this->c0;
+        aa.mul_by_01(c0, c1);
+        auto bb = this->c1;
+        bb.mul_by_1(c4);
+        auto o = c1;
+        o.add(c4);
+        this->c1.add(this->c0);
+        this->c1.mul_by_01(c0, o);
+        this->c1.sub(aa);
+        this->c1.sub(bb);
+        this->c0 = bb;
+        this->field.mul_by_nonresidue(this->c0);
+        this->c0.add(aa);
+    }
+
     // ************************* ELEMENT impl ********************************* //
+
     template <class C>
     static Fp12<N> one(C const &context)
     {
-        return Fp12(FpM12<N>::one(context));
+        FieldExtension2over3over2<N> const &field = context;
+        return Fp12<N>(Fp6_3<N>::one(context), Fp6_3<N>::zero(context), field);
     }
 
     template <class C>
     static Fp12<N> zero(C const &context)
     {
-        return Fp12(FpM12<N>::zero(context));
+        FieldExtension2over3over2<N> const &field = context;
+        return Fp12<N>(Fp6_3<N>::zero(context), Fp6_3<N>::zero(context), field);
     }
 
     Fp12<N> one() const
     {
-        return Fp12(FpM12<N>::one());
+        return Fp12::one(this->field);
     }
 
     Fp12<N> zero() const
     {
-        return Fp12(FpM12<N>::zero());
+        return Fp12::zero(this->field);
     }
 
     Fp12<N> &self()
@@ -279,42 +329,14 @@ public:
         return *this;
     }
 
-    // Computes the multiplicative inverse of this element, if nonzero.
-    Option<Fp12<N>> inverse() const
-    {
-        if (auto const v = FpM12<N>::inverse())
-        {
-            return Fp12(v);
-        }
-        else
-        {
-            return {};
-        }
-    }
-
-    void mul(Fp12<N> const &e)
-    {
-        FpM12<N>::mul(e);
-    }
-
-    void sub(Fp12<N> const &e)
-    {
-        FpM12<N>::sub(e);
-    }
-
-    void add(Fp12<N> const &e)
-    {
-        FpM12<N>::add(e);
-    }
-
     bool operator==(Fp12<N> const &other) const
     {
-        return FpM12<N>::operator==(other);
+        return this->c0 == other.c0 && this->c1 == other.c1;
     }
 
     bool operator!=(Fp12<N> const &other) const
     {
-        return (!(*this == other));
+        return !(*this == other);
     }
 };
 
