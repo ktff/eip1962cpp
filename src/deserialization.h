@@ -132,6 +132,62 @@ std::vector<u64> deserialize_scalar_with_bit_limit(usize bit_limit, Deserializer
     return num;
 }
 
+u8 deserialize_pairing_curve_type(Deserializer &deserializer)
+{
+    auto const curve_byte = deserializer.byte("Input should be longer than curve type encoding");
+    switch (curve_byte)
+    {
+    case BLS12:
+    case BN:
+    case MNT4:
+    case MNT6:
+        break;
+    default:
+        input_err("Unknown curve type");
+    }
+    return curve_byte;
+}
+
+TwistType deserialize_pairing_twist_type(Deserializer &deserializer)
+{
+    auto const twist_byte = deserializer.byte("Input is not long enough to get twist type");
+    switch (twist_byte)
+    {
+    case TWIST_TYPE_D:
+        return D;
+    case TWIST_TYPE_M:
+        return M;
+    default:
+        unknown_parameter_err("Unknown twist type supplied");
+    }
+}
+
+// ********************* OVERLOADED deserializers of Fp and Fp2 and Fp3 *********************** //
+
+template <usize N>
+Fp<N> deserialize_fpM(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
+{
+    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp_c element"), field);
+    return c0;
+}
+
+template <usize N>
+Fp2<N> deserialize_fpM(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
+{
+    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c0 element"), field);
+    auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c1 element"), field);
+    return Fp2<N>(c0, c1, field);
+}
+
+template <usize N>
+Fp3<N> deserialize_fpM(u8 mod_byte_len, FieldExtension3<N> const &field, Deserializer &deserializer)
+{
+    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c0 element"), field);
+    auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c1 element"), field);
+    auto const c2 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c2 element"), field);
+    return Fp3<N>(c0, c1, c2, field);
+}
+
 // *************************** SPECIAL PRIMITIVE deserialization *********************** //
 
 template <usize N>
@@ -159,11 +215,12 @@ Repr<N> deserialize_modulus(u8 mod_byte_len, Deserializer &deserializer)
     return modulus;
 }
 
-template <usize N>
-Fp<N> deserialize_non_residue(u8 mod_byte_len, PrimeField<N> const &field, u8 extension_degree, Deserializer &deserializer)
+template <usize N, class F, class C>
+F deserialize_non_residue(u8 mod_byte_len, C const &field, u8 extension_degree, Deserializer &deserializer)
 {
-    auto x = deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp element");
-    auto const non_residue = Fp<N>::from_repr(x, field);
+    F const non_residue = deserialize_fpM(mod_byte_len, field, deserializer);
+    // auto x = deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp element");
+    // auto const non_residue = Fp<N>::from_repr(x, field);
     if (non_residue.is_zero())
     {
         unexpected_zero_err("Fp* non-residue can not be zero");
@@ -175,48 +232,6 @@ Fp<N> deserialize_non_residue(u8 mod_byte_len, PrimeField<N> const &field, u8 ex
     }
 
     return non_residue;
-}
-
-u8 deserialize_pairing_curve_type(Deserializer &deserializer)
-{
-    auto const curve_byte = deserializer.byte("Input should be longer than curve type encoding");
-    switch (curve_byte)
-    {
-    case BLS12:
-    case BN:
-    case MNT4:
-    case MNT6:
-        break;
-    default:
-        input_err("Unknown curve type");
-    }
-    return curve_byte;
-}
-
-// ********************* OVERLOADED deserializers of Fp and Fp2 and Fp3 *********************** //
-
-template <usize N>
-Fp<N> deserialize_fpM(u8 mod_byte_len, PrimeField<N> const &field, Deserializer &deserializer)
-{
-    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp_c element"), field);
-    return c0;
-}
-
-template <usize N>
-Fp2<N> deserialize_fpM(u8 mod_byte_len, FieldExtension2<N> const &field, Deserializer &deserializer)
-{
-    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c0 element"), field);
-    auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp2_c1 element"), field);
-    return Fp2<N>(c0, c1, field);
-}
-
-template <usize N>
-Fp3<N> deserialize_fpM(u8 mod_byte_len, FieldExtension3<N> const &field, Deserializer &deserializer)
-{
-    auto const c0 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c0 element"), field);
-    auto const c1 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c1 element"), field);
-    auto const c2 = Fp<N>::from_repr(deserializer.number<N>(mod_byte_len, "Input is not long enough to get Fp3_c2 element"), field);
-    return Fp3<N>(c0, c1, c2, field);
 }
 
 // ************************* CURVE deserializers ***************************** //
@@ -254,6 +269,39 @@ CurvePoint<F> deserialize_curve_point(u8 mod_byte_len, C const &field, Deseriali
     F x = deserialize_fpM(mod_byte_len, field, deserializer);
     F y = deserialize_fpM(mod_byte_len, field, deserializer);
     return CurvePoint(x, y);
+}
+
+// ********************** POINTS deserialization ******************************* //
+template <usize N, class F, class C>
+std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> deserialize_points(u8 mod_byte_len, C const &field, WeierstrassCurve<Fp<N>> const &g1_curve, WeierstrassCurve<F> const &g2_curve, Deserializer &deserializer)
+{
+    // deser (CurvePoint<Fp<N>>,CurvePoint<F>) pairs
+    auto const num_pairs = deserializer.byte("Input is not long enough to get number of pairs");
+    if (num_pairs == 0)
+    {
+        input_err("Zero pairs encoded");
+    }
+
+    std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> points;
+    for (auto i = 0; i < num_pairs; i++)
+    {
+        auto const g1 = deserialize_curve_point<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, deserializer);
+        auto const g2 = deserialize_curve_point<C, F, N>(mod_byte_len, field, deserializer);
+
+        if (!g1.check_on_curve(g1_curve) || !g2.check_on_curve(g2_curve))
+        {
+            input_err("G1 or G2 point is not on curve");
+        }
+
+        if (!g1.check_correct_subgroup(g1_curve, field) || !g2.check_correct_subgroup(g2_curve, field))
+        {
+            input_err("G1 or G2 point is not in the expected subgroup");
+        }
+
+        points.push_back(std::tuple(g1, g2));
+    }
+
+    return points;
 }
 
 #endif

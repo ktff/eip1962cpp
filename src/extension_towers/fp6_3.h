@@ -45,9 +45,9 @@ public:
         auto const f_4_c2 = f_4;
         auto const f_5_c2 = f_5;
 
-        std::array<Fp<N>, 6> calc_frobenius_coeffs_c1 = {f_0, f_1, f_2, f_3, f_4, f_5};
+        std::array<Fp2<N>, 6> calc_frobenius_coeffs_c1 = {f_0, f_1, f_2, f_3, f_4, f_5};
         frobenius_coeffs_c1 = calc_frobenius_coeffs_c1;
-        std::array<Fp<N>, 6> calc_frobenius_coeffs_c2 = {f_0_c2, f_1_c2, f_2_c2, f_3_c2, f_4_c2, f_5_c2};
+        std::array<Fp2<N>, 6> calc_frobenius_coeffs_c2 = {f_0_c2, f_1_c2, f_2_c2, f_3_c2, f_4_c2, f_5_c2};
         frobenius_coeffs_c2 = calc_frobenius_coeffs_c2;
     }
 

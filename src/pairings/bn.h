@@ -11,12 +11,6 @@
 template <usize N>
 using ThreePoint = std::tuple<Fp2<N>, Fp2<N>, Fp2<N>>;
 
-enum TwistType
-{
-    D,
-    M
-};
-
 template <usize N>
 class BNengine
 {
@@ -28,6 +22,13 @@ class BNengine
     Fp2<N> non_residue_in_p_minus_one_over_2;
 
 public:
+    BNengine(std::vector<u64> u,
+             std::vector<u64> six_u_plus_2,
+             bool u_is_negative,
+             TwistType twist_type,
+             WeierstrassCurve<Fp2<N>> const &curve_twist,
+             Fp2<N> non_residue_in_p_minus_one_over_2) : u(u), six_u_plus_2(six_u_plus_2), u_is_negative(u_is_negative), twist_type(twist_type), curve_twist(curve_twist), non_residue_in_p_minus_one_over_2(non_residue_in_p_minus_one_over_2) {}
+
     template <class C>
     std::optional<Fp12<N>>
     pair(std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<Fp2<N>>>> const &points, C const &context) const

@@ -102,7 +102,7 @@ public:
         u64 bit_count = 0;
         for (auto it = BitIterator(scalar); it.ok(); it.next())
         {
-            auto const b = *it;
+            auto const b = it.get();
             if (b)
             {
                 if (found_begining)

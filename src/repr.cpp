@@ -35,6 +35,20 @@ u64 adc(u64 a, u64 b, u64 &carry)
     return tmp[0];
 }
 
+// Calculate a * b + carry, returning the least significant digit
+// and setting carry to the most significant digit.
+u64 mul_with_carry(u64 a, u64 b, u64 &carry)
+{
+    Repr<1> ar = {a};
+    Repr<1> br = {b};
+    Repr<2> carryr = {carry, 0};
+    auto const tmp = ar * br + carryr;
+
+    carry = tmp[1];
+
+    return tmp[0];
+}
+
 bool is_zero(std::vector<u64> const &repr)
 {
     for (auto it = repr.cbegin(); it != repr.cend(); it++)
@@ -178,7 +192,34 @@ u32 num_bits(std::vector<u64> const &repr)
     return bits;
 }
 
-void left_shift(std::vector<u64> &repr, u64 shift)
+void add_scalar(std::vector<u64> &repr, u64 value)
+{
+    for (auto i = 0; value > 0; i++)
+    {
+        if (i >= repr.size())
+        {
+            repr.push_back(value);
+            break;
+        }
+
+        repr[i] = adc(repr[i], value, value);
+    }
+}
+
+void mul_scalar(std::vector<u64> &repr, const u64 scalar)
+{
+    u64 carry = 0;
+    for (auto i = 0; i < repr.size(); i++)
+    {
+        repr[i] = mul_with_carry(repr[i], scalar, carry);
+    }
+    if (carry > 0)
+    {
+        repr.push_back(carry);
+    }
+}
+
+void right_shift(std::vector<u64> &repr, u64 shift)
 {
     auto const num_libs = repr.size();
     if (num_libs == 0)

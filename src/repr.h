@@ -65,6 +65,8 @@ void sub_noborrow(std::vector<u64> &repr, u64 value);
 
 void add_nocarry(std::vector<u64> &repr, u64 value);
 
+void add_scalar(std::vector<u64> &repr, u64 value);
+
 // a >= b
 // Where a and b are numbers
 bool greater_or_equal(std::vector<u64> const &a, std::vector<u64> const &b);
@@ -72,7 +74,9 @@ bool greater_or_equal(std::vector<u64> const &a, std::vector<u64> const &b);
 // Minimal number of bits necessary to represent number in repr
 u32 num_bits(std::vector<u64> const &repr);
 
-void left_shift(std::vector<u64> &repr, u64 shift);
+void mul_scalar(std::vector<u64> &repr, u64 scalar);
+
+void right_shift(std::vector<u64> &repr, u64 shift);
 
 std::vector<i64> into_ternary_wnaf(std::vector<u64> const &repr);
 

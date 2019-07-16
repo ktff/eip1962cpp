@@ -231,6 +231,17 @@ public:
     {
         return !(*this == other);
     }
+
+    // *************** impl ************ //
+
+    bool is_non_nth_root(u64 n) const
+    {
+        if (is_zero())
+        {
+            return false;
+        }
+        return this->is_non_nth_root_with(n, field.mod() * field.mod());
+    }
 };
 
 #endif

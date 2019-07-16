@@ -43,7 +43,7 @@ CurvePoint<E> peepinger(std::vector<std::tuple<CurvePoint<E>, std::vector<u64>>>
                 buckets[index - 1].add_mixed(g, wc, context);
             }
 
-            left_shift(s, c);
+            right_shift(s, c);
         }
 
         auto running_sum = zero_point;

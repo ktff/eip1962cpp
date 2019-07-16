@@ -157,25 +157,7 @@ public:
 
     bool is_non_nth_root(u64 n) const
     {
-        if (is_zero())
-        {
-            return false;
-        }
-
-        auto power = field.mod();
-        constexpr Repr<N> one = {1};
-        power = cbn::subtract_ignore_carry(power, one);
-        Repr<N> divisor = {n};
-        if (!cbn::is_zero(power % divisor))
-        {
-            return false;
-        }
-        power = power / divisor;
-
-        auto l = this->pow(power);
-        auto e_one = this->one();
-
-        return l != e_one;
+        return this->is_non_nth_root_with(n, field.mod());
     }
 
 private:
