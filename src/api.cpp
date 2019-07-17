@@ -14,10 +14,9 @@ Execution path goes run -> run_limbed -> run_operation -> {run_pairing_mnt,run_p
 
 // Executes non-pairing operation with given extension degree
 template <class C, class F, usize N>
-std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len, PrimeField<N> const &field, u8 extension_degree, Deserializer deserializer)
+std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len, C const &extension, u8 extension_degree, Deserializer deserializer)
 {
-    // deser Extension & Weierstrass curve
-    auto const extension = C(deserialize_non_residue<N, Fp<N>>(mod_byte_len, field, extension_degree, deserializer), field);
+    // Weierstrass curve
     auto const wc = deserialize_weierstrass_curve<C, F, N>(mod_byte_len, extension, deserializer, false);
 
     // Run the operation for the result
@@ -25,11 +24,12 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
     switch (operation)
     {
     // Addition
+    case OPERATION_G1_ADD:
     case OPERATION_G2_ADD:
     {
         // deser CurvePoints to be added
-        auto p_0 = deserialize_curve_point<C, F, N>(mod_byte_len, extension, deserializer);
-        auto const p_1 = deserialize_curve_point<C, F, N>(mod_byte_len, extension, deserializer);
+        auto p_0 = deserialize_curve_point<C, F, N>(mod_byte_len, extension, wc, deserializer);
+        auto const p_1 = deserialize_curve_point<C, F, N>(mod_byte_len, extension, wc, deserializer);
 
         // Apply addition
         p_0.add(p_1, wc, extension);
@@ -39,10 +39,11 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
         break;
     }
     // Multiplication
+    case OPERATION_G1_MUL:
     case OPERATION_G2_MUL:
     {
         // deser CurvePoint & Scalar
-        auto const p_0 = deserialize_curve_point<C, F, N>(mod_byte_len, extension, deserializer);
+        auto const p_0 = deserialize_curve_point<C, F, N>(mod_byte_len, extension, wc, deserializer);
         auto const scalar = deserialize_scalar(wc, deserializer);
 
         // Apply multiplication
@@ -53,6 +54,7 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
         break;
     }
     // Multiexponentiation
+    case OPERATION_G1_MULTIEXP:
     case OPERATION_G2_MULTIEXP:
     {
         // deser (CurvePoint,Scalar) pairs
@@ -72,7 +74,7 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
         std::vector<std::tuple<CurvePoint<F>, std::vector<u64>>> pairs;
         for (auto i = 0; i < num_pairs; i++)
         {
-            auto const p = deserialize_curve_point<C, F, N>(mod_byte_len, extension, deserializer);
+            auto const p = deserialize_curve_point<C, F, N>(mod_byte_len, extension, wc, deserializer);
             auto const scalar = deserialize_scalar(wc, deserializer);
             pairs.push_back(tuple(p, scalar));
         }
@@ -269,17 +271,39 @@ std::vector<std::uint8_t> run_operation(u8 operation, std::optional<u8> curve_ty
     else
     {
         // Non pairing operations
+
+        auto extension_degree = 1;
+        switch (operation)
+        {
+        case OPERATION_G2_ADD:
+        case OPERATION_G2_MUL:
+        case OPERATION_G2_MULTIEXP:
+            extension_degree = deserializer.byte("Input is not long enough to get extension degree");
+            break;
+        default:
+            break;
+        }
+
         // Soulution by extension degree
-        auto const extension_degree = deserializer.byte("Input is not long enough to get extension degree");
         switch (extension_degree)
         {
+        case 1:
+        {
+            return run_operation_extension<PrimeField<N>, Fp<N>, N>(operation, mod_byte_len, field, extension_degree, deserializer);
+        }
         case 2:
         {
-            return run_operation_extension<FieldExtension2<N>, Fp2<N>, N>(operation, mod_byte_len, field, extension_degree, deserializer);
+            // deser Extension
+            auto const extension = FieldExtension2<N>(deserialize_non_residue<N, Fp<N>>(mod_byte_len, field, extension_degree, deserializer), field);
+
+            return run_operation_extension<FieldExtension2<N>, Fp2<N>, N>(operation, mod_byte_len, extension, extension_degree, deserializer);
         }
         case 3:
         {
-            return run_operation_extension<FieldExtension3<N>, Fp3<N>, N>(operation, mod_byte_len, field, extension_degree, deserializer);
+            // deser Extension
+            auto const extension = FieldExtension3<N>(deserialize_non_residue<N, Fp<N>>(mod_byte_len, field, extension_degree, deserializer), field);
+
+            return run_operation_extension<FieldExtension3<N>, Fp3<N>, N>(operation, mod_byte_len, extension, extension_degree, deserializer);
         }
 
         default:
@@ -346,24 +370,19 @@ run(std::vector<std::uint8_t> const &input)
         auto deserializer = Deserializer(input);
         auto operation = deserializer.byte("Input should be longer than operation type encoding");
 
+        std::optional<u8> curve_type;
         switch (operation)
         {
+        case OPERATION_PAIRING:
+            deserialize_pairing_curve_type(deserializer);
         case OPERATION_G1_ADD:
         case OPERATION_G1_MUL:
         case OPERATION_G1_MULTIEXP:
-            unimplemented("");
-
         case OPERATION_G2_ADD:
         case OPERATION_G2_MUL:
         case OPERATION_G2_MULTIEXP:
-        {
-            return run_limbed(operation, {}, deserializer);
-        }
-        case OPERATION_PAIRING:
-        {
-            auto curve_type = deserialize_pairing_curve_type(deserializer);
             return run_limbed(operation, curve_type, deserializer);
-        }
+
         default:
             input_err("Unknown operation type");
         }

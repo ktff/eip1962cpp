@@ -267,11 +267,18 @@ WeierstrassCurve<F> deserialize_weierstrass_curve(u8 mod_byte_len, C const &fiel
 }
 
 template <class C, class F, usize N>
-CurvePoint<F> deserialize_curve_point(u8 mod_byte_len, C const &field, Deserializer &deserializer)
+CurvePoint<F> deserialize_curve_point(u8 mod_byte_len, C const &field, WeierstrassCurve<F> const &wc, Deserializer &deserializer)
 {
     F x = deserialize_fpM(mod_byte_len, field, deserializer);
     F y = deserialize_fpM(mod_byte_len, field, deserializer);
-    return CurvePoint(x, y);
+    auto const cp = CurvePoint(x, y);
+
+    if (!cp.check_on_curve(wc))
+    {
+        input_err("Point is not on curve");
+    }
+
+    return cp;
 }
 
 // ********************** POINTS deserialization ******************************* //
@@ -288,13 +295,8 @@ std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> deserialize_points(u8 
     std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> points;
     for (auto i = 0; i < num_pairs; i++)
     {
-        auto const g1 = deserialize_curve_point<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, deserializer);
-        auto const g2 = deserialize_curve_point<C, F, N>(mod_byte_len, field, deserializer);
-
-        if (!g1.check_on_curve(g1_curve) || !g2.check_on_curve(g2_curve))
-        {
-            input_err("G1 or G2 point is not on curve");
-        }
+        auto const g1 = deserialize_curve_point<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, g1_curve, deserializer);
+        auto const g2 = deserialize_curve_point<C, F, N>(mod_byte_len, field, g2_curve, deserializer);
 
         if (!g1.check_correct_subgroup(g1_curve, field) || !g2.check_correct_subgroup(g2_curve, field))
         {
