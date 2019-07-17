@@ -84,11 +84,12 @@ public:
     void serialize(u8 mod_byte_len, std::vector<u8> &data) const
     {
         auto const normal_repr = into_repr();
-        for (std::uint16_t i = ((std::uint16_t)mod_byte_len) - 1; i >= 0; i--)
+        for (i32 i = i32(mod_byte_len) - 1; i >= 0; i--)
         {
-            if (i < N)
+            auto const j = i / sizeof(u64);
+            if (j < N)
             {
-                auto const j = i / sizeof(u64);
+
                 auto const off = (i - j * sizeof(u64)) * 8;
                 data.push_back(normal_repr[j] >> off);
             }

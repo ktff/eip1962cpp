@@ -87,6 +87,7 @@ std::vector<std::uint8_t> run_operation_extension(u8 operation, u8 mod_byte_len,
     default:
         unimplemented("");
     }
+    assert(deserializer.ended());
 
     // Done
     return result;
@@ -291,7 +292,8 @@ std::vector<std::uint8_t> run_limbed(u8 operation, std::optional<u8> curve_type,
 {
     // Deserialize modulus length
     auto mod_byte_len = deserializer.byte("Input is not long enough to get modulus length");
-    auto limb_count = (mod_byte_len + 7) / 8;
+    auto mod_top_byte = deserializer.peek_byte("Input is not long enough to get modulus");
+    auto limb_count = (mod_byte_len + 7) / 8 + (mod_top_byte >> 7);
 
     // Call run_operation with adequate number of limbs
     switch (limb_count)
@@ -304,30 +306,30 @@ std::vector<std::uint8_t> run_limbed(u8 operation, std::optional<u8> curve_type,
     case 3:
     case 4:
         return run_operation<4>(operation, curve_type, mod_byte_len, deserializer);
-        // case 5:
-        //     return run_operation<5>(operation,curve_type, mod_byte_len, deserializer);
-        // case 6:
-        //     return run_operation<6>(operation,curve_type, mod_byte_len, deserializer);
-        // case 7:
-        //     return run_operation<7>(operation,curve_type, mod_byte_len, deserializer);
-        // case 8:
-        //     return run_operation<8>(operation,curve_type, mod_byte_len, deserializer);
-        // case 9:
-        //     return run_operation<9>(operation, curve_type,mod_byte_len, deserializer);
-        // case 10:
-        //     return run_operation<10>(operation,curve_type, mod_byte_len, deserializer);
-        // case 11:
-        //     return run_operation<11>(operation,curve_type, mod_byte_len, deserializer);
-        // case 12:
-        //     return run_operation<12>(operation,curve_type, mod_byte_len, deserializer);
-        // case 13:
-        //     return run_operation<13>(operation,curve_type, mod_byte_len, deserializer);
-        // case 14:
-        //     return run_operation<14>(operation,curve_type, mod_byte_len, deserializer);
-        // case 15:
-        //     return run_operation<15>(operation,curve_type, mod_byte_len, deserializer);
-        // case 16:
-        //     return run_operation<16>(operation,curve_type, mod_byte_len, deserializer);
+    case 5:
+        return run_operation<5>(operation, curve_type, mod_byte_len, deserializer);
+    case 6:
+        return run_operation<6>(operation, curve_type, mod_byte_len, deserializer);
+    case 7:
+        return run_operation<7>(operation, curve_type, mod_byte_len, deserializer);
+    case 8:
+        return run_operation<8>(operation, curve_type, mod_byte_len, deserializer);
+    case 9:
+        return run_operation<9>(operation, curve_type, mod_byte_len, deserializer);
+    case 10:
+        return run_operation<10>(operation, curve_type, mod_byte_len, deserializer);
+    case 11:
+        return run_operation<11>(operation, curve_type, mod_byte_len, deserializer);
+    case 12:
+        return run_operation<12>(operation, curve_type, mod_byte_len, deserializer);
+    case 13:
+        return run_operation<13>(operation, curve_type, mod_byte_len, deserializer);
+    case 14:
+        return run_operation<14>(operation, curve_type, mod_byte_len, deserializer);
+    case 15:
+        return run_operation<15>(operation, curve_type, mod_byte_len, deserializer);
+    case 16:
+        return run_operation<16>(operation, curve_type, mod_byte_len, deserializer);
 
     default:
         unimplemented(stringf("for %u modulus limbs", limb_count));

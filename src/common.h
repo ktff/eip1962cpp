@@ -10,6 +10,7 @@
 #include <string>
 #include <tuple>
 #include <string>
+#include <iostream>
 
 // **************** TYPES ******************** //
 using namespace std;
@@ -62,6 +63,14 @@ typedef const std::string str;
 std::string err_concat(std::string const &a, std::string const &b);
 
 std::string stringf(const char *format, ...);
+
+template <class... Args>
+void println(const char *format, Args &&... args)
+{
+#ifndef NDEBUG
+    std::cout << stringf(format, std::forward<Args>(args)...) << std::endl;
+#endif
+}
 
 enum TwistType
 {

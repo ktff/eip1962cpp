@@ -17,10 +17,10 @@ class PrimeField
 public:
     PrimeField(Repr<N> modulus) : modulus(modulus), mont_power_(N * LIMB_BITS)
     {
-        if ((modulus[N - 1] >> (LIMB_BITS - 1)) > 0 || modulus[N - 1] == 0)
-        {
-            input_err("Failed to create prime field from modulus");
-        }
+        // if ((modulus[N - 1] >> (LIMB_BITS - 1)) > 0 || modulus[N - 1] == 0)
+        // {
+        //     input_err("Failed to create prime field from modulus");
+        // }
 
         // Compute -m^-1 mod 2**64 by exponentiating by totient(2**64) - 1
         u64 inv = 1;
@@ -36,7 +36,7 @@ public:
         pow_N_LIMB_BITS[N] = 1;
         mont_r_ = pow_N_LIMB_BITS % modulus;
 
-        mont_r2_ = cbn::montgomery_mul(mont_r_, mont_r_, modulus, mont_inv_);
+        mont_r2_ = (mont_r_ * mont_r_) % modulus;
     }
 
     Repr<N> mod() const

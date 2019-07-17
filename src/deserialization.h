@@ -51,6 +51,7 @@ public:
     {
         Repr<N> num = {0};
         read(bytes, num, err);
+        // println("%lx %lx %lx %lx", num[0], num[1], num[2], num[3]);
         return num;
     }
 
@@ -60,6 +61,7 @@ public:
         std::vector<u64> num;
         num.resize((bytes + sizeof(u64) - 1) / sizeof(u64), 0);
         read(bytes, num, err);
+        // println("%lx %lx %lx", num[0], num[1], num[2]);
         return num;
     }
 
@@ -78,6 +80,7 @@ private:
     template <class T>
     void read(u8 bytes, T &num, str &err)
     {
+        // println("Read[%u B]", bytes);
         for (auto i = 0; i < bytes; i++)
         {
             auto b = byte(err);
