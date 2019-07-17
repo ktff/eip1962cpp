@@ -100,9 +100,9 @@ public:
         auto found_begining = false;
         u64 w = 0;
         u64 bit_count = 0;
-        for (auto it = BitIterator(scalar); it.ok(); it.next())
+        for (auto it = BitIterator(scalar); it.ok(); ++it)
         {
-            auto const b = it.get();
+            auto const b = *it;
             if (b)
             {
                 if (found_begining)

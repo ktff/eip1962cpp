@@ -82,8 +82,8 @@ std::vector<i64> into_ternary_wnaf(std::vector<u64> const &repr);
 
 u32 calculate_hamming_weight(std::vector<u64> const &repr);
 
-// ********************** HELPER CLASSES ******************* //
-// A is required to have to methods: size() and operator[]
+// ********************** ITERATORS ******************* //
+// A is required to have to methods: size() and operator[]->u64
 template <class A>
 class RevBitIterator
 {
@@ -94,14 +94,10 @@ public:
     // Skips higher zeros
     RevBitIterator(A const &repr) : repr(repr), at(repr.size() * LIMB_BITS)
     {
-        skip_zeros();
-    }
-
-    void skip_zeros()
-    {
+        // Skip higher zeros
         while (this->before())
         {
-            if (this->get())
+            if (**this)
             {
                 at++;
                 break;
@@ -109,7 +105,7 @@ public:
         }
     }
 
-    bool get() const
+    bool operator*()
     {
         auto i = at / LIMB_BITS;
         auto off = at - (i * LIMB_BITS);
@@ -143,7 +139,7 @@ public:
     {
     }
 
-    bool get() const
+    bool operator*()
     {
         auto i = at / LIMB_BITS;
         auto off = at - (i * LIMB_BITS);
@@ -155,7 +151,7 @@ public:
         return at < repr.size() * LIMB_BITS;
     }
 
-    void next()
+    void operator++()
     {
         at++;
     }

@@ -93,16 +93,6 @@ public:
         z = other.z;
     }
 
-    E const &get_x() const
-    {
-        return x;
-    }
-
-    E const &get_y() const
-    {
-        return y;
-    }
-
     std::tuple<E, E> xy() const
     {
         if (is_zero())
@@ -205,7 +195,7 @@ public:
         auto found_one = false;
         for (auto it = RevBitIterator(scalar); it.before();)
         {
-            auto i = it.get();
+            auto i = *it;
             if (found_one)
             {
                 res.mul2(wc);
@@ -582,32 +572,6 @@ private:
         c.mul2();
         this->y.sub(c);
     }
-
-    // template <usize N, class C>
-    // CurvePoint<E> mul_mixed_addition(Repr<N> scalar, WeierstrassCurve<E> const &wc, C const &context) const
-    // {
-    //     auto res = CurvePoint<E>::zero(context);
-    //     auto found_one = false;
-    //     for (auto it = RevBitIterator(scalar); it.before();)
-    //     {
-    //         auto i = it.get();
-    //         if (found_one)
-    //         {
-    //             res.mul2();
-    //         }
-    //         else
-    //         {
-    //             found_one = i;
-    //         }
-
-    //         if (i)
-    //         {
-    //             res.add_mixed(this, wc, context);
-    //         }
-    //     }
-
-    //     return res;
-    // }
 };
 
 #endif

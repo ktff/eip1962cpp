@@ -210,7 +210,7 @@ public:
 
         for (auto it = RevBitIterator(exp); it.before();)
         {
-            auto const i = it.get();
+            auto const i = *it;
             if (found_one)
             {
                 res.cyclotomic_square();

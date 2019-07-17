@@ -18,6 +18,7 @@ class Deserializer
 public:
     Deserializer(std::vector<std::uint8_t> const &input) : begin(input.cbegin()), end(input.cend()) {}
 
+    // Consumes a byte, throws error otherwise
     u8
     byte(str &err)
     {
@@ -33,6 +34,7 @@ public:
         }
     }
 
+    // Looks at a byte, throws error otherwise
     u8 peek_byte(str &err) const
     {
         if (!ended())
@@ -51,7 +53,6 @@ public:
     {
         Repr<N> num = {0};
         read(bytes, num, err);
-        // println("%lx %lx %lx %lx", num[0], num[1], num[2], num[3]);
         return num;
     }
 
@@ -61,7 +62,6 @@ public:
         std::vector<u64> num;
         num.resize((bytes + sizeof(u64) - 1) / sizeof(u64), 0);
         read(bytes, num, err);
-        // println("%lx %lx %lx", num[0], num[1], num[2]);
         return num;
     }
 
@@ -80,7 +80,6 @@ private:
     template <class T>
     void read(u8 bytes, T &num, str &err)
     {
-        // println("Read[%u B]", bytes);
         for (auto i = 0; i < bytes; i++)
         {
             auto b = byte(err);
@@ -218,7 +217,7 @@ Repr<N> deserialize_modulus(u8 mod_byte_len, Deserializer &deserializer)
     return modulus;
 }
 
-template <usize N, class F, class C>
+template <class F, class C>
 F deserialize_non_residue(u8 mod_byte_len, C const &field, u8 extension_degree, Deserializer &deserializer)
 {
     F const non_residue = deserialize_fpM(mod_byte_len, field, deserializer);
@@ -239,7 +238,7 @@ F deserialize_non_residue(u8 mod_byte_len, C const &field, u8 extension_degree, 
 
 // ************************* CURVE deserializers ***************************** //
 
-template <class C, class F, usize N>
+template <class F, class C>
 WeierstrassCurve<F> deserialize_weierstrass_curve(u8 mod_byte_len, C const &field, Deserializer &deserializer, bool a_must_be_zero)
 {
     F a = deserialize_fpM(mod_byte_len, field, deserializer);
@@ -266,7 +265,7 @@ WeierstrassCurve<F> deserialize_weierstrass_curve(u8 mod_byte_len, C const &fiel
     return WeierstrassCurve(a, b, order, order_len);
 }
 
-template <class C, class F, usize N>
+template <class F, class C>
 CurvePoint<F> deserialize_curve_point(u8 mod_byte_len, C const &field, WeierstrassCurve<F> const &wc, Deserializer &deserializer)
 {
     F x = deserialize_fpM(mod_byte_len, field, deserializer);
@@ -295,8 +294,8 @@ std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> deserialize_points(u8 
     std::vector<std::tuple<CurvePoint<Fp<N>>, CurvePoint<F>>> points;
     for (auto i = 0; i < num_pairs; i++)
     {
-        auto const g1 = deserialize_curve_point<PrimeField<N>, Fp<N>, N>(mod_byte_len, field, g1_curve, deserializer);
-        auto const g2 = deserialize_curve_point<C, F, N>(mod_byte_len, field, g2_curve, deserializer);
+        auto const g1 = deserialize_curve_point<Fp<N>, PrimeField<N>>(mod_byte_len, field, g1_curve, deserializer);
+        auto const g2 = deserialize_curve_point<F>(mod_byte_len, field, g2_curve, deserializer);
 
         if (!g1.check_correct_subgroup(g1_curve, field) || !g2.check_correct_subgroup(g2_curve, field))
         {

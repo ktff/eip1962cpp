@@ -49,7 +49,7 @@ protected:
         it.before(); //skip 1
         for (; it.before();)
         {
-            auto const i = it.get();
+            auto const i = *it;
             f.square();
 
             this->for_ell(f, n, g1_references, prepared_coeffs, pc_indexes);
@@ -83,7 +83,7 @@ protected:
             return ell_coeffs;
         }
 
-        auto r = CurvePoint<Fp2<N>>(twist_point.get_x(), twist_point.get_y());
+        auto r = CurvePoint<Fp2<N>>(twist_point.x, twist_point.y);
 
         auto it = RevBitIterator(this->u);
         it.before(); //skip 1
@@ -91,7 +91,7 @@ protected:
         {
             ell_coeffs.push_back(this->doubling_step(r, two_inv));
 
-            if (it.get())
+            if (*it)
             {
                 ell_coeffs.push_back(this->addition_step(r, twist_point));
             }

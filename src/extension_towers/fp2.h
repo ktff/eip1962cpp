@@ -7,7 +7,6 @@
 #include "../field.h"
 #include "common.h"
 
-// using namespace cbn;
 using namespace cbn::literals;
 
 template <usize N>

@@ -3,6 +3,7 @@
 
 #include "repr.h"
 
+// Compute unit a layer above representation
 template <class E>
 class Element
 {
@@ -53,7 +54,7 @@ public:
 
         for (auto it = RevBitIterator(e); it.before();)
         {
-            auto i = it.get();
+            auto i = *it;
             if (found_one)
             {
                 res.square();

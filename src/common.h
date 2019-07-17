@@ -1,8 +1,9 @@
 #ifndef H_COMMON
 #define H_COMMON
 
-// Comment this define to turn on asserts
+// Comment this define to turn on asserts and println
 #define NDEBUG
+
 #include <assert.h>
 #include <optional>
 #include <vector>
@@ -12,7 +13,7 @@
 #include <string>
 #include <iostream>
 
-// **************** TYPES ******************** //
+// **************** RUST equivalent TYPES for ease of porting, and is also shorter to write ******************** //
 using namespace std;
 
 // C++ version of Rust u8
@@ -42,7 +43,7 @@ using Option = std::optional<T>;
 
 typedef const std::string str;
 
-// **************** DEFINE so that compiler can see that an exception is being thrown. ************************ //
+// **************** ERRORS as DEFINE so that the compiler can see that an exception is being thrown and stop with the warnings. ************************ //
 
 #define unimplemented(ERR) throw std::runtime_error(err_concat("Unimplemented", ERR));
 
@@ -55,6 +56,8 @@ typedef const std::string str;
 #define unknown_parameter_err(ERR) throw std::domain_error(err_concat("parameter has value out of bounds, ", ERR));
 
 #define unexpected_zero_err(ERR) throw std::domain_error(err_concat("parameter expected to be non-zero, ", ERR));
+
+// **************** OTHER DEFINES ******************//
 
 #define UNUSED(x) (void)(x)
 
@@ -71,6 +74,8 @@ void println(const char *format, Args &&... args)
     std::cout << stringf(format, std::forward<Args>(args)...) << std::endl;
 #endif
 }
+
+// ************** THINGS without a good place to put, so they are here ******************** //
 
 enum TwistType
 {

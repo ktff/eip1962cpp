@@ -17,11 +17,6 @@ class PrimeField
 public:
     PrimeField(Repr<N> modulus) : modulus(modulus), mont_power_(N * LIMB_BITS)
     {
-        // if ((modulus[N - 1] >> (LIMB_BITS - 1)) > 0 || modulus[N - 1] == 0)
-        // {
-        //     input_err("Failed to create prime field from modulus");
-        // }
-
         // Compute -m^-1 mod 2**64 by exponentiating by totient(2**64) - 1
         u64 inv = 1;
         for (auto i = 0; i < 63; i++)

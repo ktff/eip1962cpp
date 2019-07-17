@@ -104,7 +104,7 @@ private:
         it.before(); // skip 1
         while (it.before())
         {
-            auto const bit = it.get();
+            auto const bit = *it;
 
             auto const dc = q.double_coefficients[dbl_idx];
             dbl_idx += 1;
@@ -182,14 +182,14 @@ private:
     {
         // not asserting normalization, it will be asserted in the loop
         auto x_twist = this->twist;
-        x_twist.mul_by_fp(g1_point.get_x());
+        x_twist.mul_by_fp(g1_point.x);
 
         auto y_twist = this->twist;
-        y_twist.mul_by_fp(g1_point.get_y());
+        y_twist.mul_by_fp(g1_point.y);
 
         return PrecomputedG1<F1, N>{
-            g1_point.get_x(),
-            g1_point.get_y(),
+            g1_point.x,
+            g1_point.y,
             x_twist,
             y_twist,
         };
@@ -200,15 +200,15 @@ private:
     {
         // not asserting normalization, it will be asserted in the loop
         // precompute addition and doubling coefficients
-        auto x_over_twist = g2_point.get_x();
+        auto x_over_twist = g2_point.x;
         x_over_twist.mul(twist_inv);
 
-        auto y_over_twist = g2_point.get_y();
+        auto y_over_twist = g2_point.y;
         y_over_twist.mul(twist_inv);
 
         auto g2_p = PrecomputedG2<F1, N>{
-            g2_point.get_x(),
-            g2_point.get_y(),
+            g2_point.x,
+            g2_point.y,
             x_over_twist,
             y_over_twist,
             std::vector<AteDoubleCoefficients<F1, N>>(),
@@ -216,8 +216,8 @@ private:
         };
 
         auto r = ExtendedCoordinates<F1, N>{
-            g2_point.get_x(),
-            g2_point.get_y(),
+            g2_point.x,
+            g2_point.y,
             F1::one(context),
             F1::one(context),
         };
@@ -229,9 +229,9 @@ private:
             auto const coeff = this->doubling_step(r);
             g2_p.double_coefficients.push_back(coeff);
 
-            if (it.get())
+            if (*it)
             {
-                auto const coeff = this->addition_step(g2_point.get_x(), g2_point.get_y(), r);
+                auto const coeff = this->addition_step(g2_point.x, g2_point.y, r);
                 g2_p.addition_coefficients.push_back(coeff);
             }
         }
